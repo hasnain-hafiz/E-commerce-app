@@ -3,6 +3,7 @@ package com.Ecom.E_commerce.app.model;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
@@ -21,6 +22,7 @@ public class Cart {
     private BigDecimal totalAmount = BigDecimal.ZERO;
 
     @OneToMany(mappedBy = "cart",cascade = CascadeType.ALL,orphanRemoval = true)
+    @EqualsAndHashCode.Exclude
     private Set<CartItem> items;
 
     public void addItem(CartItem item) {

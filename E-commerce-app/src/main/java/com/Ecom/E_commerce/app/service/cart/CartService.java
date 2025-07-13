@@ -47,12 +47,6 @@ public class CartService implements ICartService{
     }
 
     @Override
-    public BigDecimal getTotalAmount(Long cartId) {
-        Cart cart = getCart(cartId);
-        return cart.getTotalAmount() == null ? BigDecimal.ZERO : cart.getTotalAmount() ;
-    }
-
-    @Override
     public Cart addItemToCart(Long cartId, Long productId) {
         Cart cart = getCart(cartId);
         Product product = productRepository.findById(productId)
@@ -94,7 +88,7 @@ public class CartService implements ICartService{
     public Cart updateItemQuantity(Long cartId, Long productId, int quantity) {
         if (quantity <= 0) {
             removeItemFromCart(cartId, productId);
-            return null;
+            return getCart(cartId);
         }
 
         Cart cart = getCart(cartId);
@@ -106,11 +100,6 @@ public class CartService implements ICartService{
         cart.recalculateTotal();
 
         return cartRepository.save(cart);
-    }
-
-    @Override
-    public List<CartItem> getAllItems(Long cartId) {
-       return new ArrayList<>(getCart(cartId).getItems());
     }
 
     @Override

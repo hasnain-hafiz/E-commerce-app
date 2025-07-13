@@ -31,9 +31,56 @@ public class CartController {
             Cart cart = cartService.getCart(cartId);
             CartDto cartDto = cartService.convertToDto(cart);
             return ResponseEntity.ok(new ApiResponse("Cart fetched successfully!", cartDto));
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.status(NOT_FOUND).body(new ApiResponse( e.getMessage(),null));
+        }
+        catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(NOT_FOUND).body(new ApiResponse( "error" , e.getMessage()));
         }
     }
 
+    @PostMapping("/{cartId}/product/{productId}")
+    public ResponseEntity<ApiResponse> addItemToCart(@PathVariable Long productId, @PathVariable Long cartId){
+        try{
+            Cart cart = cartService.addItemToCart(cartId, productId);
+            CartDto cartDto = cartService.convertToDto(cart);
+            return ResponseEntity.ok(new ApiResponse("Item added to cart successfully!", cartDto));
+        }
+        catch (ResourceNotFoundException e){
+            return ResponseEntity.status(NOT_FOUND).body(new ApiResponse("error" , e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{cartId}/product/{productId}")
+    public ResponseEntity<ApiResponse> updateItemQuantity(@PathVariable Long productId, @PathVariable Long cartId, @RequestParam int quantity){
+        try{
+            Cart cart = cartService.updateItemQuantity( cartId, productId, quantity);
+            CartDto cartDto = cartService.convertToDto(cart);
+            return ResponseEntity.ok(new ApiResponse("Item quantity updated successfully!", cartDto));
+        }
+        catch (ResourceNotFoundException e){
+            return ResponseEntity.status(NOT_FOUND).body(new ApiResponse("error" , e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/{cartId}/product/{productId}")
+    public ResponseEntity<ApiResponse> removeItemFromCart(@PathVariable Long productId, @PathVariable Long cartId){
+        try{
+            Cart cart = cartService.removeItemFromCart( cartId, productId);
+            CartDto cartDto = cartService.convertToDto(cart);
+            return ResponseEntity.ok(new ApiResponse("Item removed from cart successfully!", cartDto));
+        }
+        catch (ResourceNotFoundException e){
+            return ResponseEntity.status(NOT_FOUND).body(new ApiResponse("error" , e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/{cartId}")
+    public ResponseEntity<ApiResponse> clearCart(@PathVariable Long cartId){
+        try {
+             cartService.clearCart(cartId);
+             return ResponseEntity.ok(new ApiResponse("Cart cleared successfully!", null));
+        }
+        catch (ResourceNotFoundException e){
+            return ResponseEntity.status(NOT_FOUND).body(new ApiResponse("error" , e.getMessage()));
+        }
+    }
 }

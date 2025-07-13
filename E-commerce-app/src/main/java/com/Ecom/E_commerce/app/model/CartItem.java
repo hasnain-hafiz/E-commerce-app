@@ -3,6 +3,7 @@ package com.Ecom.E_commerce.app.model;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
@@ -26,6 +27,7 @@ public class CartItem {
 
     @ManyToOne
     @JoinColumn(name = "cart_id")
+    @EqualsAndHashCode.Exclude
     private Cart cart;
 
     public void setTotalPrice() {

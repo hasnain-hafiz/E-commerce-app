@@ -52,10 +52,15 @@ public class CartService implements ICartService{
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
+        if(product.getInventory() <= 0){
+            throw new IllegalArgumentException("Product is out of stock");
+        }
+
         CartItem cartItem = cart.getItems().stream()
                 .filter(item -> item.getProduct().getId().equals(productId))
                 .findFirst()
                 .orElse(null);
+
 
         if(cartItem == null){
             CartItem newCartItem = new CartItem();
@@ -64,14 +69,13 @@ public class CartService implements ICartService{
             newCartItem.setUnitPrice(product.getPrice());
             newCartItem.setTotalPrice();
             cart.addItem(newCartItem);
-            cartRepository.save(cart);
         }
         else{
             cartItem.setQuantity(cartItem.getQuantity() + 1);
             cartItem.setTotalPrice();
-            cart.recalculateTotal();
-        }
 
+        }
+        cart.recalculateTotal();
         return cartRepository.save(cart);
     }
 

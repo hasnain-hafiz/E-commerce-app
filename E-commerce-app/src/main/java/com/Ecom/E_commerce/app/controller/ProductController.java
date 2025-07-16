@@ -1,11 +1,11 @@
 package com.Ecom.E_commerce.app.controller;
 
-import com.Ecom.E_commerce.app.dto.ProductDto;
-import com.Ecom.E_commerce.app.exceptions.ResourceNotFoundException;
+import com.Ecom.E_commerce.app.utils.dto.ProductDto;
+import com.Ecom.E_commerce.app.utils.exceptions.ResourceNotFoundException;
 import com.Ecom.E_commerce.app.model.Product;
-import com.Ecom.E_commerce.app.request.AddProductRequest;
-import com.Ecom.E_commerce.app.request.UpdateProductRequest;
-import com.Ecom.E_commerce.app.response.ApiResponse;
+import com.Ecom.E_commerce.app.utils.request.AddProductRequest;
+import com.Ecom.E_commerce.app.utils.request.UpdateProductRequest;
+import com.Ecom.E_commerce.app.utils.response.ApiResponse;
 import com.Ecom.E_commerce.app.service.product.IProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

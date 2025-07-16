@@ -1,7 +1,7 @@
 package com.Ecom.E_commerce.app.service.category;
 
-import com.Ecom.E_commerce.app.exceptions.AlreadyExistsException;
-import com.Ecom.E_commerce.app.exceptions.ResourceNotFoundException;
+import com.Ecom.E_commerce.app.utils.exceptions.AlreadyExistsException;
+import com.Ecom.E_commerce.app.utils.exceptions.ResourceNotFoundException;
 import com.Ecom.E_commerce.app.model.Category;
 import com.Ecom.E_commerce.app.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;

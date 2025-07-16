@@ -1,10 +1,10 @@
 package com.Ecom.E_commerce.app.service.product;
 
 
-import com.Ecom.E_commerce.app.dto.ProductDto;
+import com.Ecom.E_commerce.app.utils.dto.ProductDto;
 import com.Ecom.E_commerce.app.model.Product;
-import com.Ecom.E_commerce.app.request.AddProductRequest;
-import com.Ecom.E_commerce.app.request.UpdateProductRequest;
+import com.Ecom.E_commerce.app.utils.request.AddProductRequest;
+import com.Ecom.E_commerce.app.utils.request.UpdateProductRequest;
 
 import java.util.List;
 

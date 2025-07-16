@@ -1,12 +1,6 @@
-package com.Ecom.E_commerce.app.dto;
+package com.Ecom.E_commerce.app.utils.dto;
 
 import com.Ecom.E_commerce.app.model.Category;
-import com.Ecom.E_commerce.app.model.Image;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.math.BigDecimal;

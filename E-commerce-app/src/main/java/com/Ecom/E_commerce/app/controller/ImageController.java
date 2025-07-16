@@ -1,9 +1,9 @@
 package com.Ecom.E_commerce.app.controller;
 
-import com.Ecom.E_commerce.app.dto.ImageDto;
-import com.Ecom.E_commerce.app.exceptions.ResourceNotFoundException;
+import com.Ecom.E_commerce.app.utils.dto.ImageDto;
+import com.Ecom.E_commerce.app.utils.exceptions.ResourceNotFoundException;
 import com.Ecom.E_commerce.app.model.Image;
-import com.Ecom.E_commerce.app.response.ApiResponse;
+import com.Ecom.E_commerce.app.utils.response.ApiResponse;
 import com.Ecom.E_commerce.app.service.image.IImageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;

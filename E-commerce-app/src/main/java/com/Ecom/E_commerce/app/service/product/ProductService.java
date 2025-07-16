@@ -1,20 +1,19 @@
 package com.Ecom.E_commerce.app.service.product;
 
-import com.Ecom.E_commerce.app.dto.ImageDto;
-import com.Ecom.E_commerce.app.dto.ProductDto;
-import com.Ecom.E_commerce.app.exceptions.ResourceNotFoundException;
+import com.Ecom.E_commerce.app.utils.dto.ImageDto;
+import com.Ecom.E_commerce.app.utils.dto.ProductDto;
+import com.Ecom.E_commerce.app.utils.exceptions.ResourceNotFoundException;
 import com.Ecom.E_commerce.app.model.Category;
 import com.Ecom.E_commerce.app.model.Image;
 import com.Ecom.E_commerce.app.model.Product;
 import com.Ecom.E_commerce.app.repository.CategoryRepository;
 import com.Ecom.E_commerce.app.repository.ImageRepository;
 import com.Ecom.E_commerce.app.repository.ProductRepository;
-import com.Ecom.E_commerce.app.request.AddProductRequest;
-import com.Ecom.E_commerce.app.request.UpdateProductRequest;
+import com.Ecom.E_commerce.app.utils.request.AddProductRequest;
+import com.Ecom.E_commerce.app.utils.request.UpdateProductRequest;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;

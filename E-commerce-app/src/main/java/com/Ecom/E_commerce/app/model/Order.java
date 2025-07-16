@@ -1,6 +1,7 @@
 package com.Ecom.E_commerce.app.model;
 
-import com.Ecom.E_commerce.app.enums.OrderStatus;
+import com.Ecom.E_commerce.app.utils.enums.OrderStatus;
+import com.Ecom.E_commerce.app.model.user.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -31,6 +32,10 @@ public class Order {
     @OneToMany(mappedBy = "order",cascade = CascadeType.ALL,orphanRemoval = true )
     @EqualsAndHashCode.Exclude
     private Set<OrderItem> orderItems = new HashSet<>();
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
 
 }

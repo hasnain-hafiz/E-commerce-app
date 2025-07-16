@@ -1,13 +1,12 @@
 package com.Ecom.E_commerce.app.service.image;
 
-import com.Ecom.E_commerce.app.dto.ImageDto;
-import com.Ecom.E_commerce.app.exceptions.ResourceNotFoundException;
+import com.Ecom.E_commerce.app.utils.dto.ImageDto;
+import com.Ecom.E_commerce.app.utils.exceptions.ResourceNotFoundException;
 import com.Ecom.E_commerce.app.model.Image;
 import com.Ecom.E_commerce.app.model.Product;
 import com.Ecom.E_commerce.app.repository.ImageRepository;
 import com.Ecom.E_commerce.app.service.product.ProductService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 

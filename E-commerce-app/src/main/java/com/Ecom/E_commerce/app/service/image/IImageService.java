@@ -1,6 +1,6 @@
 package com.Ecom.E_commerce.app.service.image;
 
-import com.Ecom.E_commerce.app.dto.ImageDto;
+import com.Ecom.E_commerce.app.utils.dto.ImageDto;
 import com.Ecom.E_commerce.app.model.Image;
 import org.springframework.web.multipart.MultipartFile;
 

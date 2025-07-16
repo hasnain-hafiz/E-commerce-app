@@ -1,9 +1,9 @@
 package com.Ecom.E_commerce.app.controller;
 
-import com.Ecom.E_commerce.app.exceptions.AlreadyExistsException;
-import com.Ecom.E_commerce.app.exceptions.ResourceNotFoundException;
+import com.Ecom.E_commerce.app.utils.exceptions.AlreadyExistsException;
+import com.Ecom.E_commerce.app.utils.exceptions.ResourceNotFoundException;
 import com.Ecom.E_commerce.app.model.Category;
-import com.Ecom.E_commerce.app.response.ApiResponse;
+import com.Ecom.E_commerce.app.utils.response.ApiResponse;
 import com.Ecom.E_commerce.app.service.category.CategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

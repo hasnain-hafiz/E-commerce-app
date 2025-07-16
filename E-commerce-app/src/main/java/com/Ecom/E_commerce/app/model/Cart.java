@@ -1,5 +1,6 @@
 package com.Ecom.E_commerce.app.model;
 
+import com.Ecom.E_commerce.app.model.user.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,7 +8,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -24,6 +24,10 @@ public class Cart {
     @OneToMany(mappedBy = "cart",cascade = CascadeType.ALL,orphanRemoval = true)
     @EqualsAndHashCode.Exclude
     private Set<CartItem> items;
+
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
     public void addItem(CartItem item) {
         this.items.add(item);

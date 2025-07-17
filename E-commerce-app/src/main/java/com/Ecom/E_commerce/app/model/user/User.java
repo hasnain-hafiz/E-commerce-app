@@ -11,6 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @AllArgsConstructor
@@ -25,10 +26,9 @@ public class User {
     private String lastName;
     private String email;
     private String password;
-    private String username;
 
     @Enumerated(EnumType.STRING)
-    private UserRole role;
+    private Set<UserRole> roles;
 
     @OneToOne(mappedBy = "user",cascade = CascadeType.ALL,orphanRemoval = true)
     private Cart cart;

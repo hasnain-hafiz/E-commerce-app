@@ -15,6 +15,7 @@ import com.Ecom.E_commerce.app.utils.exceptions.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -35,6 +36,7 @@ public class CartService implements ICartService{
     }
 
     @Override
+    @Transactional
     public Cart initializeCart(Long userId) {
         Cart cart = new Cart();
         User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found"));
@@ -43,6 +45,7 @@ public class CartService implements ICartService{
     }
 
     @Override
+    @Transactional
     public void clearCart(Long Id, Long userId) {
         Cart cart = getCart(Id,userId);
         cart.getItems().clear();
@@ -51,6 +54,7 @@ public class CartService implements ICartService{
     }
 
     @Override
+    @Transactional
     public Cart addItemToCart(Long cartId, Long productId, Long userId) {
         Cart cart = getCart(cartId, userId);
         Product product = productRepository.findById(productId)
@@ -84,6 +88,7 @@ public class CartService implements ICartService{
     }
 
     @Override
+    @Transactional
     public Cart removeItemFromCart(Long cartId, Long productId, Long userId) {
         Cart cart = getCart(cartId, userId);
         CartItem cartItem = getCartItem(cartId, productId, userId);
@@ -93,6 +98,7 @@ public class CartService implements ICartService{
     }
 
     @Override
+    @Transactional
     public Cart updateItemQuantity(Long cartId, Long productId, int quantity, Long userId) {
         if (quantity <= 0) {
             removeItemFromCart(cartId, productId, userId);
@@ -110,8 +116,8 @@ public class CartService implements ICartService{
         return cartRepository.save(cart);
     }
 
-    @Override
-    public CartItem getCartItem(Long cartId, Long productId, Long userId) {
+
+    private CartItem getCartItem(Long cartId, Long productId, Long userId) {
         Cart cart = getCart(cartId, userId);
         CartItem cartItem = cart.getItems().stream()
                 .filter(item -> item.getProduct().getId().equals(productId))
@@ -121,7 +127,7 @@ public class CartService implements ICartService{
     }
 
     @Override
-    public CartDto convertToDto(Cart cart){
+    public CartDto convertCartToDto(Cart cart){
         CartDto cartDto = modelMapper.map(cart, CartDto.class);
         Set<CartItemDto> cartItemDtos = new HashSet<>();
         cart.getItems().forEach(item -> {

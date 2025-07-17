@@ -12,6 +12,5 @@ public interface ICartService {
     Cart addItemToCart(Long cartId, Long productId, Long userId);
     Cart removeItemFromCart(Long cartId, Long productId , Long userId);
     Cart updateItemQuantity(Long cartId, Long productId, int quantity, Long userId);
-    CartItem getCartItem(Long cartId, Long productId , Long userId);
-    CartDto convertToDto(Cart cart);
+    CartDto convertCartToDto(Cart cart);
 }

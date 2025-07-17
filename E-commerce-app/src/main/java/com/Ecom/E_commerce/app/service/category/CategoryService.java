@@ -6,6 +6,7 @@ import com.Ecom.E_commerce.app.model.Category;
 import com.Ecom.E_commerce.app.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,6 +17,7 @@ public class CategoryService implements ICategoryService{
     private final CategoryRepository categoryRepository;
 
     @Override
+    @Transactional
     public Category addCategory(Category category ){
         return Optional.of(category).filter(c -> !categoryRepository.existsByName(c.getName()))
                 .map(categoryRepository::save)
@@ -28,12 +30,14 @@ public class CategoryService implements ICategoryService{
     }
 
     @Override
+    @Transactional
     public void deleteCategoryById(Long id) {
         categoryRepository.findById(id).ifPresentOrElse(categoryRepository::delete,
                 () -> {throw new ResourceNotFoundException("category not found");});
     }
 
     @Override
+    @Transactional
     public Category updateCategory(Category category, Long id) {
         return Optional.ofNullable(getCategoryById(id)).map(oldCategory -> {
             oldCategory.setName(category.getName());
@@ -48,6 +52,7 @@ public class CategoryService implements ICategoryService{
 
     @Override
     public Category getCategoryByName(String name) {
-        return categoryRepository.findByName(name);
+        return categoryRepository.findByName(name)
+                .orElseThrow(() -> new ResourceNotFoundException("category not found"));
     }
 }

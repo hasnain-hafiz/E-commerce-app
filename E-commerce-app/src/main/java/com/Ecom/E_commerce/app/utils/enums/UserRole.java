@@ -1,7 +1,7 @@
 package com.Ecom.E_commerce.app.utils.enums;
 
 public enum UserRole {
-    ADMIN,
-    SELLER,
-    CUSTOMER,
+    ROLE_ADMIN,
+    ROLE_SELLER,
+    ROLE_CUSTOMER,
 }

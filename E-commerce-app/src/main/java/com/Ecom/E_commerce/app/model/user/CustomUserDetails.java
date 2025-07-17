@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 public class CustomUserDetails implements UserDetails {
@@ -23,10 +24,13 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        if(user.getRole()==null){
-            throw new RuntimeException("user role is null");
+        if (user.getRoles() == null || user.getRoles().isEmpty()) {
+            throw new RuntimeException("User roles are null or empty");
         }
-        return List.of(new SimpleGrantedAuthority(user.getRole().name()));
+
+        return user.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority(role.name()))
+                .collect(Collectors.toSet());
     }
 
     @Override

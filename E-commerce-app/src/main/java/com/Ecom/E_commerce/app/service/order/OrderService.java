@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -56,6 +57,7 @@ public class OrderService implements IOrderService {
         order.setTotalAmount(cart.getTotalAmount());
         order.setOrderStatus(OrderStatus.PENDING);
         order.setOrderDate(LocalDateTime.now());
+        order.setUser(cart.getUser());
         return order;
     }
 
@@ -109,7 +111,19 @@ public class OrderService implements IOrderService {
         return orderRepository.save(order);
     }
 
-   public OrderDto convertToDto(Order order) {
+    @Transactional
+    @Override
+    public List<Order> getAllOrders(Long userId){
+        return orderRepository.findAllByUserId(userId);
+    }
+
+    @Override
+    public List<OrderDto> convertAllOrdersToDto(List<Order> orders){
+        return orders.stream().map(this::convertOrderToDto).toList();
+    }
+
+    @Override
+    public OrderDto convertOrderToDto(Order order) {
         OrderDto orderDto = modelMapper.map(order, OrderDto.class);
         Set<OrderItemDto> orderItemDtos = new HashSet<>();
         order.getOrderItems().forEach(orderItem -> {

@@ -1,5 +1,6 @@
 package com.Ecom.E_commerce.app.service.Authentication;
 
+import com.Ecom.E_commerce.app.utils.dto.UserDto;
 import com.Ecom.E_commerce.app.utils.exceptions.AlreadyExistsException;
 import com.Ecom.E_commerce.app.jwt.JwtService;
 import com.Ecom.E_commerce.app.model.Token;
@@ -11,13 +12,14 @@ import com.Ecom.E_commerce.app.utils.request.AuthRequest;
 import com.Ecom.E_commerce.app.utils.request.RegisterRequest;
 import lombok.RequiredArgsConstructor;
 import com.Ecom.E_commerce.app.model.user.User;
+import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.file.attribute.UserPrincipalNotFoundException;
 import java.util.List;
 
 @Service
@@ -29,8 +31,10 @@ public class AuthenticationService implements IAuthenticationService{
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final TokenRepository tokenRepo;
+    private final ModelMapper modelMapper;
 
     @Override
+    @Transactional
     public String register(RegisterRequest registerRequest) {
         var e_user= userRepository.findByEmail(registerRequest.getEmail());
         if(e_user.isPresent()) { throw new AlreadyExistsException("Email already exists!");}
@@ -40,7 +44,7 @@ public class AuthenticationService implements IAuthenticationService{
                .lastName(registerRequest.getLastName())
                .email(registerRequest.getEmail())
                .password(passwordEncoder.encode(registerRequest.getPassword()))
-               .role(registerRequest.getRole())
+               .roles(registerRequest.getRole())
                .build();
 
         var savedUser = userRepository.save(user);
@@ -53,6 +57,7 @@ public class AuthenticationService implements IAuthenticationService{
     }
 
     @Override
+    @Transactional
     public String authenticate(AuthRequest authRequest) {
 
         authenticationManager.authenticate(
@@ -93,14 +98,18 @@ public class AuthenticationService implements IAuthenticationService{
         tokenRepo.save(token);
     }
 
+    @Override
     public List<User> getAllUsers(){
         return userRepository.findAll();
     }
 
+    @Override
     public User getUserById(Long id) {
         return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found with id" + id));
     }
 
+    @Override
+    @Transactional
     public void deleteUserById(Long id) {
         userRepository.findById(id).orElseThrow(
                 () -> new UserNotFoundException("User not found with id" + id)
@@ -108,5 +117,13 @@ public class AuthenticationService implements IAuthenticationService{
         userRepository.deleteById(id);
     }
 
+    @Override
+    public List<UserDto> convertAllUsersToDto(List<User> users){
+        return users.stream().map(this::convertUserToDto).toList();
+    }
 
+    @Override
+    public UserDto convertUserToDto(User user){
+       return modelMapper.map(user, UserDto.class);
+    }
 }

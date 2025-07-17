@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Set;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -13,5 +15,5 @@ public class RegisterRequest {
     private String lastName;
     private String email;
     private String password;
-    private UserRole role;
+    private Set<UserRole> role;
 }

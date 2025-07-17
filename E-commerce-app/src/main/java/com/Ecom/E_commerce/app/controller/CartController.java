@@ -33,17 +33,32 @@ public class CartController {
                 .getId();
     }
 
+    @GetMapping("/{cartId}/by-user/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse> getCartByUserId(@PathVariable Long userId, @PathVariable Long cartId){
+        try {
+            Cart cart = cartService.getCart(cartId,userId);
+            CartDto cartDto = cartService.convertCartToDto(cart);
+            return ResponseEntity.ok(new ApiResponse("Cart fetched successfully!", cartDto));
+        }
+        catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(NOT_FOUND).body(new ApiResponse( "error" , e.getMessage()));
+        }
+    }
+
     @PostMapping("/initialize")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ApiResponse> initializeCart(){
             Cart cart = cartService.initializeCart(getCurrentUserId());
             return ResponseEntity.status(CREATED).body(new ApiResponse("Cart initialized successfully!", cart.getId()));
     }
 
     @GetMapping("/{cartId}")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ApiResponse> getCartById(@PathVariable Long cartId){
         try {
             Cart cart = cartService.getCart(cartId,getCurrentUserId());
-            CartDto cartDto = cartService.convertToDto(cart);
+            CartDto cartDto = cartService.convertCartToDto(cart);
             return ResponseEntity.ok(new ApiResponse("Cart fetched successfully!", cartDto));
         }
         catch (ResourceNotFoundException e) {
@@ -52,10 +67,11 @@ public class CartController {
     }
 
     @PostMapping("/{cartId}/product/{productId}")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ApiResponse> addItemToCart(@PathVariable Long productId, @PathVariable Long cartId){
         try{
             Cart cart = cartService.addItemToCart(cartId, productId, getCurrentUserId());
-            CartDto cartDto = cartService.convertToDto(cart);
+            CartDto cartDto = cartService.convertCartToDto(cart);
             return ResponseEntity.ok(new ApiResponse("Item added to cart successfully!", cartDto));
         }
         catch (ResourceNotFoundException e){
@@ -64,10 +80,11 @@ public class CartController {
     }
 
     @PutMapping("/{cartId}/product/{productId}")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ApiResponse> updateItemQuantity(@PathVariable Long productId, @PathVariable Long cartId, @RequestParam int quantity){
         try{
             Cart cart = cartService.updateItemQuantity( cartId, productId, quantity, getCurrentUserId());
-            CartDto cartDto = cartService.convertToDto(cart);
+            CartDto cartDto = cartService.convertCartToDto(cart);
             return ResponseEntity.ok(new ApiResponse("Item quantity updated successfully!", cartDto));
         }
         catch (ResourceNotFoundException e){
@@ -76,10 +93,11 @@ public class CartController {
     }
 
     @DeleteMapping("/{cartId}/product/{productId}")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ApiResponse> removeItemFromCart(@PathVariable Long productId, @PathVariable Long cartId){
         try{
             Cart cart = cartService.removeItemFromCart( cartId, productId , getCurrentUserId());
-            CartDto cartDto = cartService.convertToDto(cart);
+            CartDto cartDto = cartService.convertCartToDto(cart);
             return ResponseEntity.ok(new ApiResponse("Item removed from cart successfully!", cartDto));
         }
         catch (ResourceNotFoundException e){
@@ -88,6 +106,7 @@ public class CartController {
     }
 
     @DeleteMapping("/{cartId}")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ApiResponse> clearCart(@PathVariable Long cartId){
         try {
              cartService.clearCart(cartId , getCurrentUserId());

@@ -7,8 +7,10 @@ import com.Ecom.E_commerce.app.utils.request.AddProductRequest;
 import com.Ecom.E_commerce.app.utils.request.UpdateProductRequest;
 import com.Ecom.E_commerce.app.utils.response.ApiResponse;
 import com.Ecom.E_commerce.app.service.product.IProductService;
+import jakarta.annotation.security.PermitAll;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +25,7 @@ public class ProductController {
     private final IProductService productService;
 
     @GetMapping("/all")
+    @PermitAll
     public ResponseEntity<ApiResponse> getAllProducts(){
         try {
             List<Product> products = productService.getAllProducts();
@@ -35,6 +38,7 @@ public class ProductController {
     }
 
     @GetMapping("/{productId}")
+    @PermitAll
     public ResponseEntity<ApiResponse> getProductById(@PathVariable Long productId){
         try {
             Product product = productService.getProductById(productId);
@@ -47,6 +51,7 @@ public class ProductController {
     }
 
     @GetMapping("/products/by-name")
+    @PermitAll
     public ResponseEntity<ApiResponse> getProductByName(@RequestParam String name){
         try {
             List<Product> products = productService.getProductsByName(name);
@@ -62,6 +67,7 @@ public class ProductController {
     }
 
     @GetMapping("/products/by-brand")
+    @PermitAll
     public ResponseEntity<ApiResponse> getProductsByBrand(@RequestParam String brand){
         try {
             List<Product> products = productService.getProductsByBrand(brand);
@@ -76,6 +82,7 @@ public class ProductController {
         }
     }
     @GetMapping("/products/by-brand-and-name")
+    @PermitAll
     public ResponseEntity<ApiResponse> getProductsByBrandAndName(@RequestParam String brandName, @RequestParam String productName){
         try {
             List<Product> products = productService.getProductsByBrandAndName(brandName, productName);
@@ -90,6 +97,7 @@ public class ProductController {
         }
     }
     @GetMapping("/products/by-category/{category}")
+    @PermitAll
     public ResponseEntity<ApiResponse> getProductsByCategory(@PathVariable String category){
         try {
             List<Product> products = productService.getProductsByCategory(category);
@@ -104,6 +112,7 @@ public class ProductController {
         }
     }
     @GetMapping("/products/by-category-and-brand")
+    @PermitAll
     public ResponseEntity<ApiResponse> getProductsByCategoryAndBrand(@RequestParam String categoryName, @RequestParam String brandName){
         try {
             List<Product> products = productService.getProductsByCategoryAndBrand(categoryName, brandName);
@@ -119,6 +128,7 @@ public class ProductController {
     }
 
     @GetMapping("/count/by-brand-and-name")
+    @PermitAll
     public ResponseEntity<ApiResponse> countProductsByBrandAndName(@RequestParam String brand, @RequestParam String name) {
         try {
             var productCount = productService.countProductsByBrandAndName(brand, name);
@@ -129,6 +139,7 @@ public class ProductController {
     }
 
     @PostMapping("/add")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ApiResponse> addProduct(@RequestBody AddProductRequest request){
         try {
             Product product = productService.addProduct(request);
@@ -140,6 +151,7 @@ public class ProductController {
         }
     }
     @PutMapping("/update/{productId}")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ApiResponse> updateProduct(@RequestBody UpdateProductRequest request, @PathVariable Long productId){
         try {
             Product product = productService.updateProduct(request, productId);
@@ -152,6 +164,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/delete/{productId}")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ApiResponse> deleteProduct(@PathVariable Long productId){
         try {
             productService.deleteProductById(productId);

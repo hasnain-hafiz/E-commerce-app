@@ -9,6 +9,7 @@ import com.Ecom.E_commerce.app.utils.request.RegisterRequest;
 import com.Ecom.E_commerce.app.utils.response.ApiResponse;
 import com.Ecom.E_commerce.app.service.Authentication.AuthenticationService;
 import jakarta.annotation.security.PermitAll;
+import jakarta.validation.Valid;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +30,7 @@ public class AuthController {
 
     @PostMapping("/register")
     @PermitAll
-    public ResponseEntity<ApiResponse> register(@RequestBody RegisterRequest registerRequest){
+    public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegisterRequest registerRequest){
         try {
             String token = authService.register(registerRequest);
             return ResponseEntity.ok(new ApiResponse("User registered successfully!", token));
@@ -41,7 +42,7 @@ public class AuthController {
 
     @PostMapping("/authenticate")
     @PermitAll
-    public ResponseEntity<ApiResponse> authenticate(@RequestBody AuthRequest authRequest){
+    public ResponseEntity<ApiResponse> authenticate(@Valid @RequestBody AuthRequest authRequest){
        try {
            String token = authService.authenticate(authRequest);
            return ResponseEntity.ok(new ApiResponse("User authenticated successfully!", token));

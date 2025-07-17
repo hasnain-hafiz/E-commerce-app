@@ -33,6 +33,10 @@ public class ImageController {
     @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<ApiResponse> saveImages(@RequestParam List<MultipartFile> files, @RequestParam Long productId) {
         try {
+            if (files == null || files.isEmpty()) {
+                return ResponseEntity.badRequest().body(new ApiResponse("No files provided", null));
+            }
+
             List<ImageDto> imageDtos = imageService.saveImages(files, productId);
             return ResponseEntity.ok(new ApiResponse("Upload success!", imageDtos));
         } catch (Exception e) {
@@ -55,6 +59,10 @@ public class ImageController {
     @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<ApiResponse> updateImage(@RequestBody MultipartFile file, @PathVariable Long imageId) {
         try {
+            if (file == null || file.isEmpty()) {
+                return ResponseEntity.badRequest().body(new ApiResponse("No files provided", null));
+            }
+
             Image image = imageService.getImageById(imageId);
             if (image != null) {
                 imageService.updateImage(file, imageId);

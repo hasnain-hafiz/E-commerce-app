@@ -8,6 +8,7 @@ import com.Ecom.E_commerce.app.utils.request.UpdateProductRequest;
 import com.Ecom.E_commerce.app.utils.response.ApiResponse;
 import com.Ecom.E_commerce.app.service.product.IProductService;
 import jakarta.annotation.security.PermitAll;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -139,8 +140,8 @@ public class ProductController {
     }
 
     @PostMapping("/add")
-    @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<ApiResponse> addProduct(@RequestBody AddProductRequest request){
+    @PreAuthorize("hasRole('SELLER')")
+    public ResponseEntity<ApiResponse> addProduct(@Valid @RequestBody AddProductRequest request){
         try {
             Product product = productService.addProduct(request);
             ProductDto productDto = productService.convertToDto(product);
@@ -151,8 +152,8 @@ public class ProductController {
         }
     }
     @PutMapping("/update/{productId}")
-    @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<ApiResponse> updateProduct(@RequestBody UpdateProductRequest request, @PathVariable Long productId){
+    @PreAuthorize("hasRole('SELLER')")
+    public ResponseEntity<ApiResponse> updateProduct(@Valid @RequestBody UpdateProductRequest request, @PathVariable Long productId){
         try {
             Product product = productService.updateProduct(request, productId);
             ProductDto productDto = productService.convertToDto(product);
@@ -164,7 +165,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/delete/{productId}")
-    @PreAuthorize("hasRole('CUSTOMER')")
+    @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<ApiResponse> deleteProduct(@PathVariable Long productId){
         try {
             productService.deleteProductById(productId);

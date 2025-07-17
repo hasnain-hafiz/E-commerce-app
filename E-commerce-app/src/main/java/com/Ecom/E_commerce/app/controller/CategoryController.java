@@ -6,6 +6,7 @@ import com.Ecom.E_commerce.app.model.Category;
 import com.Ecom.E_commerce.app.utils.response.ApiResponse;
 import com.Ecom.E_commerce.app.service.category.CategoryService;
 import jakarta.annotation.security.PermitAll;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -60,7 +61,7 @@ public class CategoryController {
 
     @PostMapping("/add")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse> addCategory(@RequestBody Category category){
+    public ResponseEntity<ApiResponse> addCategory(@Valid @RequestBody Category category){
         try {
             categoryService.addCategory(category);
             return ResponseEntity.ok(new ApiResponse("Category added successfully!", null));
@@ -72,7 +73,7 @@ public class CategoryController {
 
     @PutMapping("/update/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse> updateCategory(@RequestBody Category category, @PathVariable Long id){
+    public ResponseEntity<ApiResponse> updateCategory(@Valid @RequestBody Category category, @PathVariable Long id){
         try {
             Category updatedCategory = categoryService.updateCategory(category, id);
             return ResponseEntity.ok(new ApiResponse("Category updated successfully!", updatedCategory));

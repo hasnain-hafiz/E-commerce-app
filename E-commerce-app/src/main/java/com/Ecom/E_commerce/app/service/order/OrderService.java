@@ -1,12 +1,16 @@
 package com.Ecom.E_commerce.app.service.order;
 
-import com.Ecom.E_commerce.app.dto.OrderDto;
-import com.Ecom.E_commerce.app.dto.OrderItemDto;
-import com.Ecom.E_commerce.app.enums.OrderStatus;
+import com.Ecom.E_commerce.app.model.user.User;
+import com.Ecom.E_commerce.app.repository.UserRepository;
+import com.Ecom.E_commerce.app.utils.dto.OrderDto;
+import com.Ecom.E_commerce.app.utils.dto.OrderItemDto;
+import com.Ecom.E_commerce.app.utils.enums.OrderStatus;
 import com.Ecom.E_commerce.app.model.*;
 import com.Ecom.E_commerce.app.repository.OrderRepository;
 import com.Ecom.E_commerce.app.repository.ProductRepository;
 import com.Ecom.E_commerce.app.service.cart.CartService;
+
+import com.Ecom.E_commerce.app.utils.exceptions.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -14,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -25,11 +30,16 @@ public class OrderService implements IOrderService {
     private final CartService cartService;
     private final ProductRepository productRepository;
     private final ModelMapper modelMapper;
+    private final UserRepository userRepository;
 
-    @Override
     @Transactional
-    public Order placeOrder(Long cartId){
-        Cart cart = cartService.getCart(cartId);
+    @Override
+    public Order placeOrder(Long userId){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        Long cartId = user.getCart().getId();
+
+        Cart cart = cartService.getCart(cartId,userId);
         if (cart.getItems().isEmpty()) {
             throw new IllegalArgumentException("Cart is empty");
         }
@@ -38,7 +48,7 @@ public class OrderService implements IOrderService {
         order.setOrderItems(orderItems);
 
         orderRepository.save(order);
-        cartService.clearCart(cartId);
+        cartService.clearCart(cartId, user.getId());
         return order;
     }
 
@@ -47,6 +57,7 @@ public class OrderService implements IOrderService {
         order.setTotalAmount(cart.getTotalAmount());
         order.setOrderStatus(OrderStatus.PENDING);
         order.setOrderDate(LocalDateTime.now());
+        order.setUser(cart.getUser());
         return order;
     }
 
@@ -74,15 +85,15 @@ public class OrderService implements IOrderService {
     }
 
     @Override
-    public Order getOrderById(Long id){
-        return orderRepository.findById(id)
+    public Order getOrderById(Long id, Long userId){
+        return orderRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(()-> new IllegalArgumentException("Order not found"));
     }
 
     @Override
     @Transactional
-    public Order cancelOrder(Long orderId){
-        Order order = getOrderById(orderId);
+    public Order cancelOrder(Long orderId, Long userId){
+        Order order = getOrderById(orderId, userId);
         if (order.getOrderStatus() == OrderStatus.CANCELLED) {
             throw new IllegalStateException("Order already cancelled");
         }
@@ -100,7 +111,19 @@ public class OrderService implements IOrderService {
         return orderRepository.save(order);
     }
 
-   public OrderDto convertToDto(Order order) {
+    @Transactional
+    @Override
+    public List<Order> getAllOrders(Long userId){
+        return orderRepository.findAllByUserId(userId);
+    }
+
+    @Override
+    public List<OrderDto> convertAllOrdersToDto(List<Order> orders){
+        return orders.stream().map(this::convertOrderToDto).toList();
+    }
+
+    @Override
+    public OrderDto convertOrderToDto(Order order) {
         OrderDto orderDto = modelMapper.map(order, OrderDto.class);
         Set<OrderItemDto> orderItemDtos = new HashSet<>();
         order.getOrderItems().forEach(orderItem -> {

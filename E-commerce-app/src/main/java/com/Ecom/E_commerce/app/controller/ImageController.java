@@ -1,16 +1,18 @@
 package com.Ecom.E_commerce.app.controller;
 
-import com.Ecom.E_commerce.app.dto.ImageDto;
-import com.Ecom.E_commerce.app.exceptions.ResourceNotFoundException;
+import com.Ecom.E_commerce.app.utils.dto.ImageDto;
+import com.Ecom.E_commerce.app.utils.exceptions.ResourceNotFoundException;
 import com.Ecom.E_commerce.app.model.Image;
-import com.Ecom.E_commerce.app.response.ApiResponse;
+import com.Ecom.E_commerce.app.utils.response.ApiResponse;
 import com.Ecom.E_commerce.app.service.image.IImageService;
+import jakarta.annotation.security.PermitAll;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,12 +24,13 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("${api.prefix}/images")
+@RequestMapping("${api.prefix}/image")
 public class ImageController {
 
     private final IImageService imageService;
 
     @PostMapping("/upload")
+    @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<ApiResponse> saveImages(@RequestParam List<MultipartFile> files, @RequestParam Long productId) {
         try {
             List<ImageDto> imageDtos = imageService.saveImages(files, productId);
@@ -39,6 +42,7 @@ public class ImageController {
     }
 
     @GetMapping("/image/download/{imageId}")
+    @PermitAll
     public ResponseEntity<Resource> downloadImage(@PathVariable Long imageId) throws SQLException {
         Image image = imageService.getImageById(imageId);
         ByteArrayResource resource = new ByteArrayResource(image.getImage().getBytes(1, (int) image.getImage().length()));
@@ -48,6 +52,7 @@ public class ImageController {
     }
 
     @PutMapping("/update/{imageId}")
+    @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<ApiResponse> updateImage(@RequestBody MultipartFile file, @PathVariable Long imageId) {
         try {
             Image image = imageService.getImageById(imageId);
@@ -64,6 +69,7 @@ public class ImageController {
     }
 
     @PutMapping("delete/{imageId}")
+    @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<ApiResponse> deleteImage(@PathVariable Long imageId) {
         try {
             Image image = imageService.getImageById(imageId);

@@ -1,14 +1,14 @@
 package com.Ecom.E_commerce.app.service.image;
 
-import com.Ecom.E_commerce.app.dto.ImageDto;
-import com.Ecom.E_commerce.app.exceptions.ResourceNotFoundException;
+import com.Ecom.E_commerce.app.utils.dto.ImageDto;
+import com.Ecom.E_commerce.app.utils.exceptions.ResourceNotFoundException;
 import com.Ecom.E_commerce.app.model.Image;
 import com.Ecom.E_commerce.app.model.Product;
 import com.Ecom.E_commerce.app.repository.ImageRepository;
 import com.Ecom.E_commerce.app.service.product.ProductService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.sql.rowset.serial.SerialBlob;
@@ -25,6 +25,7 @@ public class ImageService implements IImageService {
     private final ProductService productService;
 
     @Override
+    @Transactional
     public  List<ImageDto> saveImages(List<MultipartFile> files, Long productId) {
         Product product = productService.getProductById(productId);
 
@@ -61,6 +62,7 @@ public class ImageService implements IImageService {
     }
 
     @Override
+    @Transactional
     public void updateImage(MultipartFile file, Long productId) {
         Image image = getImageById(productId);
         try {
@@ -81,6 +83,7 @@ public class ImageService implements IImageService {
     }
 
     @Override
+    @Transactional
     public void deleteImageById(Long id) {
         imageRepository.findById(id).ifPresentOrElse(imageRepository::delete,
                 () -> {throw new ResourceNotFoundException("image not found with id" + id);});

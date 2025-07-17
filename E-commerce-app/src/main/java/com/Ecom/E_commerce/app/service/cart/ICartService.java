@@ -1,19 +1,16 @@
 package com.Ecom.E_commerce.app.service.cart;
 
-import com.Ecom.E_commerce.app.dto.CartDto;
+import com.Ecom.E_commerce.app.model.user.CustomUserDetails;
+import com.Ecom.E_commerce.app.utils.dto.CartDto;
 import com.Ecom.E_commerce.app.model.Cart;
 import com.Ecom.E_commerce.app.model.CartItem;
 
-import java.math.BigDecimal;
-import java.util.List;
-
 public interface ICartService {
-    Cart getCart(Long cartId);
-    Cart initializeCart();
-    void clearCart(Long cartId);
-    Cart addItemToCart(Long cartId, Long productId);
-    Cart removeItemFromCart(Long cartId, Long productId);
-    Cart updateItemQuantity(Long cartId, Long productId, int quantity);
-    CartItem getCartItem(Long cartId, Long productId);
-    CartDto convertToDto(Cart cart);
+    Cart getCart(Long cartId, Long userId);
+    Cart initializeCart(Long userId);
+    void clearCart(Long cartId, Long userId);
+    Cart addItemToCart(Long cartId, Long productId, Long userId);
+    Cart removeItemFromCart(Long cartId, Long productId , Long userId);
+    Cart updateItemQuantity(Long cartId, Long productId, int quantity, Long userId);
+    CartDto convertCartToDto(Cart cart);
 }

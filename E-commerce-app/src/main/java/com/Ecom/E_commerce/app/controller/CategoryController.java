@@ -1,12 +1,14 @@
 package com.Ecom.E_commerce.app.controller;
 
-import com.Ecom.E_commerce.app.exceptions.AlreadyExistsException;
-import com.Ecom.E_commerce.app.exceptions.ResourceNotFoundException;
+import com.Ecom.E_commerce.app.utils.exceptions.AlreadyExistsException;
+import com.Ecom.E_commerce.app.utils.exceptions.ResourceNotFoundException;
 import com.Ecom.E_commerce.app.model.Category;
-import com.Ecom.E_commerce.app.response.ApiResponse;
+import com.Ecom.E_commerce.app.utils.response.ApiResponse;
 import com.Ecom.E_commerce.app.service.category.CategoryService;
+import jakarta.annotation.security.PermitAll;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +23,7 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @GetMapping("/all")
+    @PermitAll
     public ResponseEntity<ApiResponse> getAllCategories(){
         try {
             List<Category> categories = categoryService.getAllCategories();
@@ -32,6 +35,7 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}")
+    @PermitAll
     public ResponseEntity<ApiResponse> getCategoryById(@PathVariable Long id){
         try {
             Category category = categoryService.getCategoryById(id);
@@ -43,6 +47,7 @@ public class CategoryController {
     }
 
     @GetMapping("/by-name/{name}")
+    @PermitAll
     public ResponseEntity<ApiResponse> getCategoryByName(@PathVariable String name){
         try {
             Category category = categoryService.getCategoryByName(name);
@@ -54,6 +59,7 @@ public class CategoryController {
     }
 
     @PostMapping("/add")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse> addCategory(@RequestBody Category category){
         try {
             categoryService.addCategory(category);
@@ -65,6 +71,7 @@ public class CategoryController {
     }
 
     @PutMapping("/update/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse> updateCategory(@RequestBody Category category, @PathVariable Long id){
         try {
             Category updatedCategory = categoryService.updateCategory(category, id);
@@ -76,6 +83,7 @@ public class CategoryController {
     }
 
     @DeleteMapping("/delete/{categoryId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse> deleteCategory(@PathVariable Long categoryId){
         try {
             categoryService.deleteCategoryById(categoryId);

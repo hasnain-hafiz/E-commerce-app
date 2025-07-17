@@ -1,4 +1,4 @@
-package com.Ecom.E_commerce.app.dto;
+package com.Ecom.E_commerce.app.utils.dto;
 
 import com.Ecom.E_commerce.app.model.Cart;
 import com.Ecom.E_commerce.app.model.Product;

@@ -1,8 +1,5 @@
-package com.Ecom.E_commerce.app.dto;
+package com.Ecom.E_commerce.app.utils.dto;
 
-import com.Ecom.E_commerce.app.model.CartItem;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.OneToMany;
 import lombok.Data;
 
 import java.math.BigDecimal;

@@ -1,16 +1,16 @@
 package com.Ecom.E_commerce.app.service.product;
 
-import com.Ecom.E_commerce.app.dto.ImageDto;
-import com.Ecom.E_commerce.app.dto.ProductDto;
-import com.Ecom.E_commerce.app.exceptions.ResourceNotFoundException;
+import com.Ecom.E_commerce.app.utils.dto.ImageDto;
+import com.Ecom.E_commerce.app.utils.dto.ProductDto;
+import com.Ecom.E_commerce.app.utils.exceptions.ResourceNotFoundException;
 import com.Ecom.E_commerce.app.model.Category;
 import com.Ecom.E_commerce.app.model.Image;
 import com.Ecom.E_commerce.app.model.Product;
 import com.Ecom.E_commerce.app.repository.CategoryRepository;
 import com.Ecom.E_commerce.app.repository.ImageRepository;
 import com.Ecom.E_commerce.app.repository.ProductRepository;
-import com.Ecom.E_commerce.app.request.AddProductRequest;
-import com.Ecom.E_commerce.app.request.UpdateProductRequest;
+import com.Ecom.E_commerce.app.utils.request.AddProductRequest;
+import com.Ecom.E_commerce.app.utils.request.UpdateProductRequest;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -29,14 +29,12 @@ public class ProductService implements IProductService{
     private final ImageRepository imageRepository;
 
     @Override
+    @Transactional
     public Product addProduct(AddProductRequest product) {
 
-        Category category = Optional.ofNullable(categoryRepository.findByName(product.getCategory().getName()))
-                .orElseGet(() ->{
-                    Category newCategory = new Category(product.getCategory().getName());
-                    return categoryRepository.save(newCategory);
-                });
-        product.setCategory(category);
+        Category category = categoryRepository.findByName(product.getCategory().getName())
+                        .orElseThrow(()-> new ResourceNotFoundException("Category not found!"));
+
         return productRepository.save(createProduct(product,category));
     }
 
@@ -58,6 +56,7 @@ public class ProductService implements IProductService{
     }
 
     @Override
+    @Transactional
     public void deleteProductById(Long id) {
         productRepository.findById(id)
                 .ifPresentOrElse(productRepository::delete,
@@ -65,7 +64,7 @@ public class ProductService implements IProductService{
     }
 
     @Override
-
+    @Transactional
     public Product updateProduct(UpdateProductRequest product, Long prodId) {
        Product existingProduct = productRepository.findById(prodId)
                .orElseThrow(()-> new ResourceNotFoundException("product not found"));
@@ -73,12 +72,14 @@ public class ProductService implements IProductService{
     }
 
     private Product updateProduct(Product product, UpdateProductRequest request){
+        Category category = categoryRepository.findByName(request.getCategory().getName())
+                .orElseThrow(()-> new ResourceNotFoundException("Category not found!"));
+
         product.setName(request.getName());
         product.setDescription(request.getDescription());
         product.setBrand(request.getBrand());
         product.setPrice(request.getPrice());
         product.setInventory(request.getInventory());
-        Category category = categoryRepository.findByName(request.getCategory().getName());
         product.setCategory(category);
         return product;
     }

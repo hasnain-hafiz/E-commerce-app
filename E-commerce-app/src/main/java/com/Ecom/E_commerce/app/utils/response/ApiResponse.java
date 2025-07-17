@@ -1,11 +1,11 @@
-package com.Ecom.E_commerce.app.response;
+package com.Ecom.E_commerce.app.utils.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class ApiResponse {
+public class ApiResponse<T> {
     private String message;
-    private Object data;
+    private T data;
 }

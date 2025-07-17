@@ -1,4 +1,4 @@
-package com.Ecom.E_commerce.app.enums;
+package com.Ecom.E_commerce.app.utils.enums;
 
 public enum OrderStatus {
     PENDING,

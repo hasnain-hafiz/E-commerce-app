@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: ecommerce-app
+    runtime: docker
+    plan: free
+    branch: main
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        value: ${DATABASE_URL}
+      - key: SPRING_DATASOURCE_USERNAME
+        value: ${DATABASE_USERNAME}
+      - key: SPRING_DATASOURCE_PASSWORD
+        value: ${DATABASE_PASSWORD}
+      - key: JWT_SECRET
+        value: ${JWT_SECRET}

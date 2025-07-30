@@ -26,11 +26,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrderService implements IOrderService {
 
-    private final OrderRepository orderRepository;
     private final CartService cartService;
     private final ProductRepository productRepository;
     private final ModelMapper modelMapper;
     private final UserRepository userRepository;
+    private  OrderRepository orderRepository;
 
     @Transactional
     @Override

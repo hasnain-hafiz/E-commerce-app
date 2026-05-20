@@ -1,13 +1,14 @@
-# Stage 1: Build the JAR
-FROM maven:3.9.6-eclipse-temurin-21 AS build
-WORKDIR /app
-COPY E-commerce-app/pom.xml .
-COPY E-commerce-app/src ./src
-RUN mvn clean package -DskipTests
+# Use OpenJDK 17 as base image
+FROM openjdk:17-jdk
 
-# Stage 2: Run the JAR
-FROM eclipse-temurin:21-jdk
+# Set working directory
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+
+# Copy the jar file
+COPY ./target/E-commerce-app-0.0.1-SNAPSHOT.jar app.jar
+
+# Expose port 8080
 EXPOSE 8080
+
+# Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]

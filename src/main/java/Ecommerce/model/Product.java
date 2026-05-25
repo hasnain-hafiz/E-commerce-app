@@ -1,5 +1,6 @@
 package Ecommerce.model;
 
+import Ecommerce.model.user.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -30,12 +31,17 @@ public class Product {
     @OneToMany(mappedBy = "product",cascade = CascadeType.ALL,orphanRemoval = true)
     private List<Image> imageList;
 
-    public Product(String name, String description, String brand, BigDecimal price, int inventory, Category category) {
+    @ManyToOne
+    @JoinColumn(name="seller_id")
+    private User seller;
+
+    public Product(String name, String description, String brand, BigDecimal price, int inventory, Category category, User seller) {
         this.name = name;
         this.description = description;
         this.brand = brand;
         this.price = price;
         this.inventory = inventory;
         this.category = category;
+        this.seller = seller;
     }
 }

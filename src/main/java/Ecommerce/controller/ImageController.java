@@ -32,7 +32,7 @@ public class ImageController {
     @PostMapping("/upload")
     @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<ApiResponse> saveImages(
-            @RequestBody List<MultipartFile> files,
+            @RequestParam("files") List<MultipartFile> files,
             @RequestParam Long productId
     ) {
         try {

@@ -70,41 +70,4 @@ public class ProductController {
                 new ApiResponse("Products fetched", productService.getConvertedProducts(products))
         );
     }
-
-    @PostMapping("/add")
-    @PreAuthorize("hasRole('SELLER')")
-    public ResponseEntity<ApiResponse> addProduct(@Valid @RequestBody AddProductRequest request){
-        try {
-            Product product = productService.addProduct(request);
-            ProductDto productDto = productService.convertToDto(product);
-            return ResponseEntity.ok(new ApiResponse("Product added successfully!", productDto));
-        }
-        catch (Exception e){
-            return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(new ApiResponse("error", e.getMessage()));
-        }
-    }
-    @PutMapping("/update/{productId}")
-    @PreAuthorize("hasRole('SELLER')")
-    public ResponseEntity<ApiResponse> updateProduct(@Valid @RequestBody UpdateProductRequest request, @PathVariable Long productId){
-        try {
-            Product product = productService.updateProduct(request, productId);
-            ProductDto productDto = productService.convertToDto(product);
-            return ResponseEntity.ok(new ApiResponse("Product updated successfully!", productDto));
-        }
-        catch (ResourceNotFoundException e){
-            return ResponseEntity.status(NOT_FOUND).body(new ApiResponse(e.getMessage(),null));
-        }
-    }
-
-    @DeleteMapping("/delete/{productId}")
-    @PreAuthorize("hasRole('SELLER')")
-    public ResponseEntity<ApiResponse> deleteProduct(@PathVariable Long productId){
-        try {
-            productService.deleteProductById(productId);
-            return ResponseEntity.ok(new ApiResponse("Product deleted successfully!", null));
-        }
-        catch (ResourceNotFoundException e){
-            return ResponseEntity.status(NOT_FOUND).body(new ApiResponse(e.getMessage(),null));
-        }
-    }
 }

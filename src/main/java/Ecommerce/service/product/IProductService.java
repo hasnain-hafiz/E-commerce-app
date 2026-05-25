@@ -9,10 +9,7 @@ import Ecommerce.utils.request.UpdateProductRequest;
 import java.util.List;
 
 public interface IProductService {
-    Product addProduct(AddProductRequest product);
     Product getProductById(Long id);
-    void deleteProductById(Long id);
-    Product updateProduct(UpdateProductRequest product, Long prodId);
     List<Product> getAllProducts();
 
     List<ProductDto> getConvertedProducts(List<Product> products);

@@ -27,26 +27,7 @@ public class ProductService implements IProductService{
     private final ModelMapper modelMapper;
     private final ImageRepository imageRepository;
 
-    @Override
-    @Transactional
-    public Product addProduct(AddProductRequest product) {
 
-        Category category = categoryRepository.findByName(product.getCategory().getName())
-                        .orElseThrow(()-> new ResourceNotFoundException("Category not found!"));
-
-        return productRepository.save(createProduct(product,category));
-    }
-
-    private Product createProduct(AddProductRequest request, Category category){
-        return new Product(
-                request.getName(),
-                request.getDescription(),
-                request.getBrand(),
-                request.getPrice(),
-                request.getInventory(),
-                category
-        );
-    }
 
     @Override
     public Product getProductById(Long id) {
@@ -54,34 +35,6 @@ public class ProductService implements IProductService{
                 .orElseThrow(()-> new ResourceNotFoundException("product not found"));
     }
 
-    @Override
-    @Transactional
-    public void deleteProductById(Long id) {
-        productRepository.findById(id)
-                .ifPresentOrElse(productRepository::delete,
-                        () -> {throw new ResourceNotFoundException("Product not found!");});
-    }
-
-    @Override
-    @Transactional
-    public Product updateProduct(UpdateProductRequest product, Long prodId) {
-       Product existingProduct = productRepository.findById(prodId)
-               .orElseThrow(()-> new ResourceNotFoundException("product not found"));
-       return productRepository.save(updateProduct(existingProduct,product));
-    }
-
-    private Product updateProduct(Product product, UpdateProductRequest request){
-        Category category = categoryRepository.findByName(request.getCategory().getName())
-                .orElseThrow(()-> new ResourceNotFoundException("Category not found!"));
-
-        product.setName(request.getName());
-        product.setDescription(request.getDescription());
-        product.setBrand(request.getBrand());
-        product.setPrice(request.getPrice());
-        product.setInventory(request.getInventory());
-        product.setCategory(category);
-        return product;
-    }
 
     @Override
     public List<Product> getAllProducts() {

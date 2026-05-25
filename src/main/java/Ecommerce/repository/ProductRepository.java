@@ -30,4 +30,7 @@ WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
 OR LOWER(p.brand) LIKE LOWER(CONCAT('%', :keyword, '%'))
 OR LOWER(p.category.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
 """)
-    List<Product> searchProducts(@Param("keyword") String keyword);}
+    List<Product> searchProducts(@Param("keyword") String keyword);
+
+    List<Product> findBySellerId(Long sellerId);
+}

@@ -10,8 +10,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 @Data
 public class UpdateProductRequest {
-    @NotNull
-    private Long id;
+
     @NotBlank
     private String name;
     @NotBlank

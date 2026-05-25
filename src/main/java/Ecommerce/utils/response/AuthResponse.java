@@ -12,5 +12,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class AuthResponse {
     @NotBlank
-    private String accessToken;
+    private String token;
+    private boolean seller;
 }

@@ -8,6 +8,7 @@ import Ecommerce.utils.exceptions.UserNotFoundException;
 import Ecommerce.utils.request.AuthRequest;
 import Ecommerce.utils.request.RegisterRequest;
 import Ecommerce.utils.response.ApiResponse;
+import Ecommerce.utils.response.AuthResponse;
 import jakarta.annotation.security.PermitAll;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,8 +36,8 @@ public class AuthController {
     @PermitAll
     public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegisterRequest registerRequest){
         try {
-            String token = authService.register(registerRequest);
-            return ResponseEntity.ok(new ApiResponse("Signup successful!", token));
+            AuthResponse authResponse = authService.register(registerRequest);
+            return ResponseEntity.ok(new ApiResponse("Signup successful!", authResponse));
         }
         catch (AlreadyExistsException e){
             return ResponseEntity.status(CONFLICT).body(new ApiResponse("error", e.getMessage()));
@@ -47,8 +48,8 @@ public class AuthController {
     @PermitAll
     public ResponseEntity<ApiResponse> authenticate(@Valid @RequestBody AuthRequest authRequest){
        try {
-           String token = authService.authenticate(authRequest);
-           return ResponseEntity.ok(new ApiResponse("Login successful!", token));
+           AuthResponse authResponse = authService.authenticate(authRequest);
+           return ResponseEntity.ok(new ApiResponse("Login successful!", authResponse));
        }
        catch (Exception e){
            return ResponseEntity.status(UNAUTHORIZED).body(new ApiResponse("Invalid Email or Password", e.getMessage()));

@@ -12,6 +12,7 @@ import Ecommerce.utils.exceptions.AlreadyExistsException;
 import Ecommerce.utils.exceptions.UserNotFoundException;
 import Ecommerce.utils.request.AuthRequest;
 import Ecommerce.utils.request.RegisterRequest;
+import Ecommerce.utils.response.AuthResponse;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 
 import static Ecommerce.utils.enums.UserRole.ROLE_CUSTOMER;
+import static Ecommerce.utils.enums.UserRole.ROLE_SELLER;
 
 @Service
 @RequiredArgsConstructor
@@ -39,30 +41,41 @@ public class AuthenticationService implements IAuthenticationService{
 
     @Override
     @Transactional
-    public String register(RegisterRequest registerRequest) {
+    public AuthResponse register(RegisterRequest registerRequest) {
         var e_user= userRepository.findByEmail(registerRequest.getEmail());
         if(e_user.isPresent()) { throw new AlreadyExistsException("Email already exists!");}
+        System.out.println("role-seller=" +registerRequest.isSeller());
 
        var user = User.builder()
                .firstName(registerRequest.getFirstName())
                .lastName(registerRequest.getLastName())
                .email(registerRequest.getEmail())
                .password(passwordEncoder.encode(registerRequest.getPassword()))
-               .roles(Set.of(ROLE_CUSTOMER))
+               .roles(!registerRequest.isSeller() ? Set.of(ROLE_CUSTOMER) : Set.of(ROLE_SELLER))
                .build();
-
+        System.out.println("user-role=" +user.getEmail() + user.getRoles());
         var savedUser = userRepository.save(user);
         var token = jwtService.generateToken(new CustomUserDetails(savedUser));
 
         revokeAllUserToken(savedUser);
         saveUserToken(savedUser, token);
 
-        return token;
+        AuthResponse authResponse = new AuthResponse();
+        authResponse.setToken(token);
+
+        if(savedUser.getRoles().contains(ROLE_CUSTOMER)){
+             authResponse.setSeller(false);
+        }
+        else{
+            authResponse.setSeller(true);
+        }
+
+        return authResponse;
     }
 
     @Override
     @Transactional
-    public String authenticate(AuthRequest authRequest) {
+    public AuthResponse authenticate(AuthRequest authRequest) {
 
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -77,7 +90,16 @@ public class AuthenticationService implements IAuthenticationService{
         revokeAllUserToken(user);
         saveUserToken(user, token);
 
-        return token;
+        AuthResponse authResponse = new AuthResponse();
+        authResponse.setToken(token);
+        if(user.getRoles().contains(ROLE_CUSTOMER)){
+            authResponse.setSeller(false);
+        }
+        else{
+            authResponse.setSeller(true);
+        }
+
+        return authResponse;
     }
 
     private void revokeAllUserToken(User user){

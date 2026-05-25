@@ -23,6 +23,7 @@ import static org.springframework.http.HttpStatus.*;
 @RestController
 @RequestMapping("${api.prefix}/auth")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "https://ecommerce-frontend-sigma-lilac.vercel.app")
 public class AuthController {
 
     private final AuthenticationService authService;

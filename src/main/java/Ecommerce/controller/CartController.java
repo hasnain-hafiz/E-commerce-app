@@ -20,6 +20,7 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 @RestController
 @RequestMapping("${api.prefix}/cart")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "https://ecommerce-frontend-sigma-lilac.vercel.app")
 public class CartController {
 
     private final CartService cartService;

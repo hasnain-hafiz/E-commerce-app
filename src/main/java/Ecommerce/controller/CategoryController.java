@@ -19,6 +19,7 @@ import static org.springframework.http.HttpStatus.*;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("${api.prefix}/category")
+@CrossOrigin(origins = "https://ecommerce-frontend-sigma-lilac.vercel.app")
 public class CategoryController {
 
     private final CategoryService categoryService;

@@ -25,6 +25,7 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("${api.prefix}/image")
+@CrossOrigin(origins = "https://ecommerce-frontend-sigma-lilac.vercel.app")
 public class ImageController {
 
     private final IImageService imageService;

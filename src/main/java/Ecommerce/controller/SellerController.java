@@ -22,6 +22,7 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("${api.prefix}/seller")
+@CrossOrigin(origins = "https://ecommerce-frontend-sigma-lilac.vercel.app")
 public class SellerController {
 
     private final SellerService sellerService;

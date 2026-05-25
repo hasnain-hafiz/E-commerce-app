@@ -80,6 +80,7 @@ public class SecurityConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
                         .allowedOrigins("http://localhost:5173")
+                        .allowedHeaders("https://ecommerce-frontend-sigma-lilac.vercel.app")
                         .allowedMethods("*");
             }
         };

@@ -69,7 +69,7 @@ public class OrderService implements IOrderService {
         return order;
     }
 
-    private Set<OrderItem> createOrderItems(Set<CartItem> cartItems, Order order){
+    private Set<OrderItem> createOrderItems(List<CartItem> cartItems, Order order){
        return cartItems.stream().map(cartItem ->
                 {
                     Product product = cartItem.getProduct();

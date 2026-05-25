@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Set;
 
 @Data
@@ -15,5 +16,5 @@ public class CartDto {
     @Min(0)
     private BigDecimal totalAmount = BigDecimal.ZERO;
     @Valid
-    private Set<CartItemDto> items;
+    private List<CartItemDto> items;
 }

@@ -1,41 +1,72 @@
 package Ecommerce.jwt;
 
+import Ecommerce.model.user.User;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Function;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class JwtService {
 
     private final String secretKey;
+    private final long accessTokenExpiryMs;
+    private final long refreshTokenExpiryMs;
 
-    public JwtService(@Value("${jwt.secret}") String secretKey) {
+    public JwtService(
+            @Value("${jwt.secret}") String secretKey,
+            @Value("${jwt.access-token-expiry-ms:900000}") long accessTokenExpiryMs,          // 15 min default
+            @Value("${jwt.refresh-token-expiry-ms:604800000}") long refreshTokenExpiryMs       // 7 days default
+    ) {
         this.secretKey = secretKey;
+        this.accessTokenExpiryMs = accessTokenExpiryMs;
+        this.refreshTokenExpiryMs = refreshTokenExpiryMs;
     }
 
-    public String generateToken(Map<String, Object> claims, UserDetails userDetails) {
+    public String generateAccessToken(User user) {
+        List<String> roles = user.getRoles().stream().map(Enum::name).collect(Collectors.toList());
         return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(userDetails.getUsername())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 100 * 60 * 60 * 10))
+                .setSubject(user.getEmail())
+                .claim("type", "ACCESS")
+                .claim("roles", roles)
+                .claim("uid", user.getId())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpiryMs))
                 .signWith(getKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(),userDetails);
+    public String generateRefreshToken(User user) {
+        return Jwts.builder()
+                .setSubject(user.getEmail())
+                .claim("type", "REFRESH")
+                .claim("uid", user.getId())
+                .setId(java.util.UUID.randomUUID().toString())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpiryMs))
+                .signWith(getKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public long getAccessTokenExpiryMs() {
+        return accessTokenExpiryMs;
+    }
+
+    public long getRefreshTokenExpiryMs() {
+        return refreshTokenExpiryMs;
     }
 
     private SecretKey getKey() {
@@ -43,7 +74,8 @@ public class JwtService {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    private Claims extractAllClaims(String token) {
+    /** Parses & validates signature/expiry. Throws JwtException on any problem. */
+    public Claims parseClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getKey())
                 .build()
@@ -51,25 +83,41 @@ public class JwtService {
                 .getBody();
     }
 
-    private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
+    public boolean isValidAccessToken(String token) {
+        try {
+            Claims claims = parseClaims(token);
+            return "ACCESS".equals(claims.get("type", String.class));
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
     }
 
-    public  String extractSubject(String token) {
-        return extractClaim(token, Claims::getSubject);
+    public boolean isValidRefreshToken(String token) {
+        try {
+            Claims claims = parseClaims(token);
+            return "REFRESH".equals(claims.get("type", String.class));
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
     }
 
-    public Boolean validateToken(String token, UserDetails userDetails) {
-        final String username = extractSubject(token);
-
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    public String extractSubject(String token) {
+        return parseClaims(token).getSubject();
     }
 
-    private Boolean isTokenExpired(String token) {
-        final Date expiration = extractClaim(token, Claims::getExpiration);
-
-        return expiration.before(new Date());
+    @SuppressWarnings("unchecked")
+    public List<String> extractRoles(String token) {
+        return (List<String>) parseClaims(token).get("roles", List.class);
     }
 
+    /** SHA-256 hash used to store/lookup refresh tokens without ever persisting the raw value. */
+    public String hashToken(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(token.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
+        }
+    }
 }

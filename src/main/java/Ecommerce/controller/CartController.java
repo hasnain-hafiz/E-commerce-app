@@ -1,104 +1,63 @@
 package Ecommerce.controller;
 
 import Ecommerce.model.Cart;
-import Ecommerce.model.user.User;
-import Ecommerce.repository.UserRepository;
 import Ecommerce.service.cart.CartService;
 import Ecommerce.utils.dto.CartDto;
-import Ecommerce.utils.exceptions.ResourceNotFoundException;
 import Ecommerce.utils.response.ApiResponse;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import static org.springframework.http.HttpStatus.CREATED;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @RestController
 @RequestMapping("${api.prefix}/cart")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "https://ecommerce-frontend-sigma-lilac.vercel.app")
+@Validated
 public class CartController {
 
     private final CartService cartService;
 
-    // =========================
-    // 📦 GET CART
-    // =========================
     @GetMapping("/my")
     @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<ApiResponse> getCart() {
+    public ResponseEntity<ApiResponse<CartDto>> getCart() {
         Cart cart = cartService.getCart();
-        CartDto cartDto = cartService.convertCartToDto(cart);
-
-        return ResponseEntity.ok(
-                new ApiResponse("Cart fetched successfully!", cartDto)
-        );
+        return ResponseEntity.ok(new ApiResponse<>("Cart fetched successfully!", cartService.convertCartToDto(cart)));
     }
 
-    // =========================
-    // ➕ ADD ITEM
-    // =========================
     @PostMapping("/items/{productId}")
     @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<ApiResponse> addItem(
+    public ResponseEntity<ApiResponse<CartDto>> addItem(
             @PathVariable Long productId,
-            @RequestParam(defaultValue = "1") int quantity
+            @RequestParam(defaultValue = "1") @Min(1) @Max(100) int quantity
     ) {
         Cart cart = cartService.addItemToCart(productId, quantity);
-        CartDto cartDto = cartService.convertCartToDto(cart);
-
-        return ResponseEntity.ok(
-                new ApiResponse("Item added to cart successfully!", cartDto)
-        );
+        return ResponseEntity.ok(new ApiResponse<>("Item added to cart successfully!", cartService.convertCartToDto(cart)));
     }
 
-    // =========================
-    // 🔄 UPDATE QUANTITY
-    // =========================
     @PutMapping("/items/{productId}")
     @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<ApiResponse> updateItemQuantity(
+    public ResponseEntity<ApiResponse<CartDto>> updateItemQuantity(
             @PathVariable Long productId,
-            @RequestParam int quantity
+            @RequestParam @Min(1) @Max(100) int quantity
     ) {
         Cart cart = cartService.updateItemQuantity(productId, quantity);
-        CartDto cartDto = cartService.convertCartToDto(cart);
-
-        return ResponseEntity.ok(
-                new ApiResponse("Item quantity updated successfully!", cartDto)
-        );
+        return ResponseEntity.ok(new ApiResponse<>("Item quantity updated successfully!", cartService.convertCartToDto(cart)));
     }
 
-    // =========================
-    // ❌ REMOVE ITEM
-    // =========================
     @DeleteMapping("/items/{productId}")
     @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<ApiResponse> removeItem(
-            @PathVariable Long productId
-    ) {
+    public ResponseEntity<ApiResponse<CartDto>> removeItem(@PathVariable Long productId) {
         Cart cart = cartService.removeItemFromCart(productId);
-        CartDto cartDto = cartService.convertCartToDto(cart);
-
-        return ResponseEntity.ok(
-                new ApiResponse("Item removed from cart successfully!", cartDto)
-        );
+        return ResponseEntity.ok(new ApiResponse<>("Item removed from cart successfully!", cartService.convertCartToDto(cart)));
     }
 
-    // =========================
-    // 🧹 CLEAR CART
-    // =========================
     @DeleteMapping("/clear")
     @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<ApiResponse> clearCart() {
+    public ResponseEntity<ApiResponse<Void>> clearCart() {
         cartService.clearCart();
-
-        return ResponseEntity.ok(
-                new ApiResponse("Cart cleared successfully!", null)
-        );
+        return ResponseEntity.ok(new ApiResponse<>("Cart cleared successfully!", null));
     }
 }

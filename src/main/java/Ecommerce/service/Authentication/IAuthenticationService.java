@@ -4,14 +4,14 @@ import Ecommerce.model.user.User;
 import Ecommerce.utils.dto.UserDto;
 import Ecommerce.utils.request.AuthRequest;
 import Ecommerce.utils.request.RegisterRequest;
-import Ecommerce.utils.response.AuthResponse;
+import Ecommerce.utils.response.AuthTokens;
 
 import java.util.List;
 
 public interface IAuthenticationService {
 
-    AuthResponse register(RegisterRequest registerRequest);
-    AuthResponse authenticate(AuthRequest authRequest);
+    AuthTokens register(RegisterRequest registerRequest);
+    AuthTokens authenticate(AuthRequest authRequest);
 
     List<User> getAllUsers();
 

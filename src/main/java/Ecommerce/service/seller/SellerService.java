@@ -72,9 +72,10 @@ public class SellerService implements ISellerService {
     @Transactional
     @Override
     public void deleteProductById(Long id) {
-        productRepository.findById(id)
-                .ifPresentOrElse(productRepository::delete,
-                        () -> {throw new ResourceNotFoundException("Product not found!");});
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found!"));
+        assertOwnedByCurrentUser(product);
+        productRepository.delete(product);
     }
 
     @Transactional
@@ -82,7 +83,16 @@ public class SellerService implements ISellerService {
     public Product updateProduct(UpdateProductRequest product, Long prodId) {
         Product existingProduct = productRepository.findById(prodId)
                 .orElseThrow(()-> new ResourceNotFoundException("product not found"));
+        assertOwnedByCurrentUser(existingProduct);
         return productRepository.save(updateProduct(existingProduct,product));
+    }
+
+    /** Prevents one seller from editing or deleting another seller's product (IDOR guard). */
+    private void assertOwnedByCurrentUser(Product product) {
+        Long ownerId = product.getSeller() == null ? null : product.getSeller().getId();
+        if (ownerId == null || !ownerId.equals(getCurrentUser().getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("You do not own this product");
+        }
     }
 
     private Product updateProduct(Product product, UpdateProductRequest request){

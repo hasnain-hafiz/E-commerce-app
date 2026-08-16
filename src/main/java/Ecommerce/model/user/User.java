@@ -31,6 +31,14 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Set<UserRole> roles;
 
+    @Builder.Default
+    private int failedLoginAttempts = 0;
+
+    private java.time.Instant lockedUntil;
+
+    @Builder.Default
+    private boolean enabled = true;
+
     @OneToOne(mappedBy = "user",cascade = CascadeType.ALL,orphanRemoval = true)
     private Cart cart;
 

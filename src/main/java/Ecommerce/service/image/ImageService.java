@@ -2,11 +2,16 @@ package Ecommerce.service.image;
 
 import Ecommerce.model.Image;
 import Ecommerce.model.Product;
+import Ecommerce.model.user.User;
 import Ecommerce.repository.ImageRepository;
+import Ecommerce.repository.UserRepository;
 import Ecommerce.service.product.ProductService;
 import Ecommerce.utils.dto.ImageDto;
 import Ecommerce.utils.exceptions.ResourceNotFoundException;
+import Ecommerce.utils.exceptions.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,6 +28,23 @@ public class ImageService implements IImageService {
 
     private final ImageRepository imageRepository;
     private final ProductService productService;
+    private final UserRepository userRepository;
+
+    private User getCurrentUser() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException("User not found"));
+    }
+
+    private void assertOwnsProduct(Product product) {
+        Long ownerId = product.getSeller() == null ? null : product.getSeller().getId();
+        if (ownerId == null || !ownerId.equals(getCurrentUser().getId())) {
+            throw new AccessDeniedException("You do not own this product");
+        }
+    }
+
+    private void assertOwnsImage(Image image) {
+        assertOwnsProduct(image.getProduct());
+    }
 
     @Transactional
     @Override
@@ -40,6 +62,7 @@ public class ImageService implements IImageService {
     public List<ImageDto> saveImages(List<MultipartFile> files, Long productId) {
 
         Product product = productService.getProductById(productId);
+        assertOwnsProduct(product);
 
         List<ImageDto> savedImageDto = new ArrayList<>();
 
@@ -85,6 +108,7 @@ public class ImageService implements IImageService {
     @Transactional
     public void updateImage(MultipartFile file, Long productId) {
         Image image = getImageById(productId);
+        assertOwnsImage(image);
         try {
             image.setFileName(file.getOriginalFilename());
             image.setImage(new SerialBlob(file.getBytes()));
@@ -105,8 +129,8 @@ public class ImageService implements IImageService {
     @Override
     @Transactional
     public void deleteImageById(Long id) {
-        imageRepository.findById(id).ifPresentOrElse(imageRepository::delete,
-                () -> {throw new ResourceNotFoundException("image not found with id" + id);});
-
+        Image image = getImageById(id);
+        assertOwnsImage(image);
+        imageRepository.delete(image);
     }
 }

@@ -4,7 +4,6 @@ import Ecommerce.model.Order;
 import Ecommerce.repository.UserRepository;
 import Ecommerce.service.order.OrderService;
 import Ecommerce.utils.dto.OrderDto;
-import Ecommerce.utils.exceptions.ResourceNotFoundException;
 import Ecommerce.utils.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,12 +14,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-import static org.springframework.http.HttpStatus.NOT_FOUND;
-
 @RestController
 @RequestMapping("${api.prefix}/order")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "https://ecommerce-frontend-sigma-lilac.vercel.app")
 public class OrderController {
 
     private final OrderService orderService;
@@ -35,67 +31,37 @@ public class OrderController {
 
     @PostMapping("/placeOrder")
     @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<ApiResponse> placeOrder(){
-        try {
-            Order order = orderService.placeOrder(getCurrentUserId());
-            OrderDto orderDto = orderService.convertOrderToDto(order);
-            return ResponseEntity.ok(new ApiResponse("Order placed successfully!", orderDto));
-        }
-        catch (ResourceNotFoundException e){
-            return ResponseEntity.status(NOT_FOUND).body(new ApiResponse("error", e.getMessage()));
-        }
+    public ResponseEntity<ApiResponse<OrderDto>> placeOrder() {
+        Order order = orderService.placeOrder(getCurrentUserId());
+        return ResponseEntity.ok(new ApiResponse<>("Order placed successfully!", orderService.convertOrderToDto(order)));
     }
 
     @GetMapping("/all")
     @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<ApiResponse> getAllOrders(){
-        try {
-            List<Order> orders = orderService.getAllOrders(getCurrentUserId());
-            List<OrderDto> orderDtos = orderService.convertAllOrdersToDto(orders);
-            return ResponseEntity.ok(new ApiResponse("Orders fetched successfully!", orderDtos));
-        }
-        catch (Exception e){
-            return ResponseEntity.status(NOT_FOUND).body(new ApiResponse("error", e.getMessage()));
-        }
+    public ResponseEntity<ApiResponse<List<OrderDto>>> getAllOrders() {
+        List<Order> orders = orderService.getAllOrders(getCurrentUserId());
+        return ResponseEntity.ok(new ApiResponse<>("Orders fetched successfully!", orderService.convertAllOrdersToDto(orders)));
     }
 
+    // Admin oversight view - scoped to a specific user's orders, not a global dump.
     @GetMapping("/all/by-userId/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse> getAllOrdersByUserId(@PathVariable Long userId){
-        try {
-            List<Order> orders = orderService.getAllOrders(userId);
-            List<OrderDto> orderDtos = orderService.convertAllOrdersToDto(orders);
-            return ResponseEntity.ok(new ApiResponse("Orders fetched successfully!", orderDtos));
-        }
-        catch (Exception e){
-            return ResponseEntity.status(NOT_FOUND).body(new ApiResponse("error", e.getMessage()));
-        }
+    public ResponseEntity<ApiResponse<List<OrderDto>>> getAllOrdersByUserId(@PathVariable Long userId) {
+        List<Order> orders = orderService.getAllOrders(userId);
+        return ResponseEntity.ok(new ApiResponse<>("Orders fetched successfully!", orderService.convertAllOrdersToDto(orders)));
     }
-
 
     @GetMapping("/{orderId}")
     @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<ApiResponse> getOrderById(@PathVariable Long orderId){
-        try {
-            Order order = orderService.getOrderById(orderId, getCurrentUserId());
-            OrderDto orderDto = orderService.convertOrderToDto(order);
-            return ResponseEntity.ok(new ApiResponse("Order fetched successfully!", orderDto));
-        }
-        catch (ResourceNotFoundException e){
-            return ResponseEntity.status(NOT_FOUND).body(new ApiResponse("error", e.getMessage()));
-        }
+    public ResponseEntity<ApiResponse<OrderDto>> getOrderById(@PathVariable Long orderId) {
+        Order order = orderService.getOrderById(orderId, getCurrentUserId());
+        return ResponseEntity.ok(new ApiResponse<>("Order fetched successfully!", orderService.convertOrderToDto(order)));
     }
 
     @PutMapping("/cancel/{orderId}")
     @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<ApiResponse> cancelOrder(@PathVariable Long orderId){
-        try {
-            Order order = orderService.cancelOrder(orderId, getCurrentUserId());
-            OrderDto orderDto = orderService.convertOrderToDto(order);
-            return ResponseEntity.ok(new ApiResponse("Order cancelled successfully!", orderDto));
-        }
-        catch (ResourceNotFoundException e){
-            return ResponseEntity.status(NOT_FOUND).body(new ApiResponse("error", e.getMessage()));
-        }
+    public ResponseEntity<ApiResponse<OrderDto>> cancelOrder(@PathVariable Long orderId) {
+        Order order = orderService.cancelOrder(orderId, getCurrentUserId());
+        return ResponseEntity.ok(new ApiResponse<>("Order cancelled successfully!", orderService.convertOrderToDto(order)));
     }
 }

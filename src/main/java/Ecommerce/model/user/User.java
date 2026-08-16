@@ -37,7 +37,15 @@ public class User {
     private java.time.Instant lockedUntil;
 
     @Builder.Default
-    private boolean enabled = true;
+    private Boolean enabled = true;
+
+    /**
+     * Treat legacy NULL values as enabled so Hibernate can load existing users
+     * created before this column was introduced as a primitive boolean.
+     */
+    public boolean isEnabled() {
+        return enabled == null || enabled;
+    }
 
     @OneToOne(mappedBy = "user",cascade = CascadeType.ALL,orphanRemoval = true)
     private Cart cart;

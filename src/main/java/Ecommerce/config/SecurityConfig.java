@@ -19,7 +19,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.authentication.session.NullAuthenticatedSessionStrategy;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -40,6 +42,12 @@ public class SecurityConfig {
     @Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:5174}")
     private String allowedOrigins;
 
+    @Value("${app.cookie.secure:true}")
+    private boolean cookieSecure;
+
+    @Value("${app.cookie.same-site:None}")
+    private String cookieSameSite;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
 
@@ -50,6 +58,10 @@ public class SecurityConfig {
                 // state-changing request must carry the X-XSRF-TOKEN header.
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(csrfTokenRepository())
+                        // Use the raw token from the readable XSRF-TOKEN cookie. The default
+                        // XOR handler masks the request attribute and is not compatible with
+                        // this SPA double-submit-cookie flow.
+                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                         .ignoringRequestMatchers(
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/authenticate",
@@ -91,11 +103,22 @@ public class SecurityConfig {
                             response.getWriter().write("{\"message\":\"Authentication required\",\"data\":null}");
                         })
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            response.setStatus(403);
+                            org.slf4j.LoggerFactory.getLogger(SecurityConfig.class).warn(
+                                    "Access denied on {} {} - {}: {}",
+                                    request.getMethod(), request.getRequestURI(),
+                                    accessDeniedException.getClass().getSimpleName(), accessDeniedException.getMessage());
                             response.setContentType("application/json");
-                            response.getWriter().write("{\"message\":\"You are not authorized to perform this action\",\"data\":null}");
+                            if (accessDeniedException instanceof org.springframework.security.web.csrf.CsrfException) {
+                                response.setStatus(403);
+                                response.getWriter().write("{\"message\":\"Missing or invalid CSRF token - call GET /api/v1/csrf first and send X-XSRF-TOKEN on state-changing requests\",\"data\":null}");
+                            } else {
+                                response.setStatus(403);
+                                response.getWriter().write("{\"message\":\"You are not authorized to perform this action\",\"data\":null}");
+                            }
                         }))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        .sessionAuthenticationStrategy(new NullAuthenticatedSessionStrategy()))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(jwtFilter, RateLimitFilter.class)
@@ -127,7 +150,7 @@ public class SecurityConfig {
     @Bean
     public CookieCsrfTokenRepository csrfTokenRepository() {
         CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
-        repository.setCookieCustomizer(cookie -> cookie.sameSite("None").secure(true));
+        repository.setCookieCustomizer(cookie -> cookie.sameSite(cookieSameSite).secure(cookieSecure));
         return repository;
     }
 
@@ -144,17 +167,14 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-
         config.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-XSRF-TOKEN"));
         config.setExposedHeaders(List.of("X-XSRF-TOKEN"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
-
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
-
         return source;
     }
 }

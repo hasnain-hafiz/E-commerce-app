@@ -10,6 +10,7 @@ import Ecommerce.repository.ProductRepository;
 import Ecommerce.repository.UserRepository;
 import Ecommerce.utils.dto.ImageDto;
 import Ecommerce.utils.dto.ProductDto;
+import Ecommerce.utils.exceptions.ForbiddenException;
 import Ecommerce.utils.exceptions.ResourceNotFoundException;
 import Ecommerce.utils.exceptions.UserNotFoundException;
 import Ecommerce.utils.request.AddProductRequest;
@@ -42,6 +43,16 @@ public class SellerService implements ISellerService {
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 
+    // NEW: ownership guard. Previously updateProduct/deleteProductById only
+    // checked that the product existed, so any authenticated SELLER could
+    // modify or delete ANY seller's product by guessing/incrementing an id.
+    private void assertOwnsProduct(Product product) {
+        Long currentUserId = getCurrentUser().getId();
+        if (product.getSeller() == null || !product.getSeller().getId().equals(currentUserId)) {
+            throw new ForbiddenException("You do not have permission to modify this product");
+        }
+    }
+
     @Override
     public List<Product> getSellerProducts(){
         return productRepository.findBySellerId(getCurrentUser().getId());
@@ -51,7 +62,9 @@ public class SellerService implements ISellerService {
     @Override
     public Product addProduct(AddProductRequest product) {
 
-        Category category = categoryRepository.findByName(product.getCategory().getName())
+        // CHANGED: product.getCategory() is now a plain String (see
+        // AddProductRequest) instead of a Category entity.
+        Category category = categoryRepository.findByName(product.getCategory())
                 .orElseThrow(()-> new ResourceNotFoundException("Category not found!"));
 
         return productRepository.save(createProduct(product,category));
@@ -72,9 +85,13 @@ public class SellerService implements ISellerService {
     @Transactional
     @Override
     public void deleteProductById(Long id) {
-        productRepository.findById(id)
-                .ifPresentOrElse(productRepository::delete,
-                        () -> {throw new ResourceNotFoundException("Product not found!");});
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found!"));
+
+        // CHANGED: ownership check added (previously missing entirely).
+        assertOwnsProduct(product);
+
+        productRepository.delete(product);
     }
 
     @Transactional
@@ -82,11 +99,17 @@ public class SellerService implements ISellerService {
     public Product updateProduct(UpdateProductRequest product, Long prodId) {
         Product existingProduct = productRepository.findById(prodId)
                 .orElseThrow(()-> new ResourceNotFoundException("product not found"));
+
+        // CHANGED: ownership check added (previously missing entirely).
+        assertOwnsProduct(existingProduct);
+
         return productRepository.save(updateProduct(existingProduct,product));
     }
 
     private Product updateProduct(Product product, UpdateProductRequest request){
-        Category category = categoryRepository.findByName(request.getCategory().getName())
+        // CHANGED: request.getCategory() is now a plain String (see
+        // UpdateProductRequest) instead of a Category entity.
+        Category category = categoryRepository.findByName(request.getCategory())
                 .orElseThrow(()-> new ResourceNotFoundException("Category not found!"));
 
         product.setName(request.getName());

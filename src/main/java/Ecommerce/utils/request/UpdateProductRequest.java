@@ -1,13 +1,11 @@
 package Ecommerce.utils.request;
 
-import Ecommerce.model.Category;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.math.BigDecimal;
+
 @Data
 public class UpdateProductRequest {
 
@@ -21,7 +19,8 @@ public class UpdateProductRequest {
     private int inventory;
     @NotBlank
     private String brand;
-    @NotNull
-    @Valid
-    private Category category;
+
+    // CHANGED: was `Category category` — see AddProductRequest for why.
+    @NotBlank
+    private String category;
 }

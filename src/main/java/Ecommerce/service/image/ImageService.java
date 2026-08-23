@@ -2,11 +2,16 @@ package Ecommerce.service.image;
 
 import Ecommerce.model.Image;
 import Ecommerce.model.Product;
+import Ecommerce.model.user.User;
 import Ecommerce.repository.ImageRepository;
+import Ecommerce.repository.UserRepository;
 import Ecommerce.service.product.ProductService;
 import Ecommerce.utils.dto.ImageDto;
+import Ecommerce.utils.exceptions.ForbiddenException;
 import Ecommerce.utils.exceptions.ResourceNotFoundException;
+import Ecommerce.utils.exceptions.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,6 +28,26 @@ public class ImageService implements IImageService {
 
     private final ImageRepository imageRepository;
     private final ProductService productService;
+    // NEW: needed to resolve the currently authenticated seller for ownership checks.
+    private final UserRepository userRepository;
+
+    private User getCurrentUser() {
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+    }
+
+    // NEW: ownership guard. Previously any authenticated SELLER could attach,
+    // replace, or delete images on ANY product by supplying its id, since
+    // there was no check that the product belonged to them.
+    private void assertOwnsProduct(Product product) {
+        Long currentUserId = getCurrentUser().getId();
+        if (product.getSeller() == null || !product.getSeller().getId().equals(currentUserId)) {
+            throw new ForbiddenException("You do not have permission to modify images for this product");
+        }
+    }
 
     @Transactional
     @Override
@@ -41,6 +66,9 @@ public class ImageService implements IImageService {
 
         Product product = productService.getProductById(productId);
 
+        // CHANGED: ownership check added (previously missing entirely).
+        assertOwnsProduct(product);
+
         List<ImageDto> savedImageDto = new ArrayList<>();
 
         for (MultipartFile file : files) {
@@ -51,21 +79,13 @@ public class ImageService implements IImageService {
                 image.setImage(new SerialBlob(file.getBytes()));
                 image.setProduct(product);
 
-                // ✅ FIRST SAVE (so ID is generated)
-                System.out.println("Saving image...");
                 Image savedImage = imageRepository.save(image);
 
-                System.out.println("Saved image ID: " + savedImage.getId());
-
-                // ✅ NOW build correct URL using ID
                 String fileUrl = "/api/v1/image/download/" + savedImage.getId();
-
                 savedImage.setFileUrl(fileUrl);
 
-                // ✅ SAVE AGAIN with URL
                 imageRepository.save(savedImage);
 
-                // DTO
                 ImageDto dto = new ImageDto();
                 dto.setId(savedImage.getId());
                 dto.setFileName(savedImage.getFileName());
@@ -83,8 +103,12 @@ public class ImageService implements IImageService {
 
     @Override
     @Transactional
-    public void updateImage(MultipartFile file, Long productId) {
-        Image image = getImageById(productId);
+    public void updateImage(MultipartFile file, Long imageId) {
+        Image image = getImageById(imageId);
+
+        // CHANGED: ownership check added (previously missing entirely).
+        assertOwnsProduct(image.getProduct());
+
         try {
             image.setFileName(file.getOriginalFilename());
             image.setImage(new SerialBlob(file.getBytes()));
@@ -105,8 +129,11 @@ public class ImageService implements IImageService {
     @Override
     @Transactional
     public void deleteImageById(Long id) {
-        imageRepository.findById(id).ifPresentOrElse(imageRepository::delete,
-                () -> {throw new ResourceNotFoundException("image not found with id" + id);});
+        Image image = getImageById(id);
 
+        // CHANGED: ownership check added (previously missing entirely).
+        assertOwnsProduct(image.getProduct());
+
+        imageRepository.delete(image);
     }
 }

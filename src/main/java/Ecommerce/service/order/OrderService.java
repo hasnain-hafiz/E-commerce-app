@@ -15,6 +15,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -36,40 +37,48 @@ public class OrderService implements IOrderService {
     public Order placeOrder(Long userId){
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
-        System.out.println("OrderService: User found: " + user.getEmail());
-        Long cartId = user.getCart().getId();
-        System.out.println("OrderService: Cart found: " + cartId);
         Cart cart = user.getCart();
-        System.out.println("OrderService: Cart items: " + cart.getItems().size());
 
         if (cart.getItems().isEmpty()) {
             throw new IllegalArgumentException("Cart is empty");
         }
 
         Order order = createOrder(cart);
-        System.out.println("OrderService: Order created: " + order.getId() + order.getOrderStatus());
         Set<OrderItem> orderItems = createOrderItems(cart.getItems(), order);
-        System.out.println("OrderService: Order items created: " + orderItems.size());
         order.setOrderItems(orderItems);
 
+        // CHANGED: previously order.totalAmount was copied from
+        // cart.getTotalAmount(), which was computed from each CartItem's
+        // unitPrice — captured once, when the item was *added* to the
+        // cart, and never refreshed. If a seller changed the product price
+        // while it sat in the cart, the customer would check out at a
+        // stale price. Now the total is recomputed from the prices actually
+        // snapshotted onto the order items below (which read the live
+        // Product price), so the backend remains authoritative for pricing
+        // at the moment of purchase, not at the moment of add-to-cart.
+        order.setTotalAmount(recalculateTotal(orderItems));
+
         orderRepository.save(order);
-        System.out.println("OrderService: Order saved to database" + order.getId() + order.getOrderStatus());
-        
+
         cartService.clearCart();
-        System.out.println("OrderService: Cart cleared");
         return order;
+    }
+
+    private BigDecimal recalculateTotal(Set<OrderItem> orderItems) {
+        return orderItems.stream()
+                .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private Order createOrder(Cart cart){
         Order order = new Order();
-        order.setTotalAmount(cart.getTotalAmount());
         order.setOrderStatus(OrderStatus.PENDING);
         order.setOrderDate(LocalDateTime.now());
         order.setUser(cart.getUser());
         return order;
     }
 
-    private Set<OrderItem> createOrderItems(Set<CartItem> cartItems, Order order){
+    private Set<OrderItem> createOrderItems(List<CartItem> cartItems, Order order){
        return cartItems.stream().map(cartItem ->
                 {
                     Product product = cartItem.getProduct();
@@ -80,12 +89,23 @@ public class OrderService implements IOrderService {
                     }
 
                     product.setInventory(product.getInventory() - requestedQty);
+                    // CHANGED: no manual flush needed for the @Version bump —
+                    // saving here means if another transaction already
+                    // incremented this row's version (e.g. a concurrent
+                    // checkout), Hibernate raises
+                    // ObjectOptimisticLockingFailureException instead of
+                    // silently overwriting the other purchase's decrement.
+                    // See GlobalExceptionHandler for how that's surfaced.
                     productRepository.save(product);
 
                     OrderItem orderItem = new OrderItem();
-                    orderItem.setPrice(cartItem.getUnitPrice());
-                    orderItem.setProduct(cartItem.getProduct());
-                    orderItem.setQuantity(cartItem.getQuantity());
+                    // CHANGED: was cartItem.getUnitPrice() (stale, captured
+                    // at add-to-cart time). Now snapshots the live product
+                    // price at the moment of purchase, which is what
+                    // "price snapshot at purchase time" is supposed to mean.
+                    orderItem.setPrice(product.getPrice());
+                    orderItem.setProduct(product);
+                    orderItem.setQuantity(requestedQty);
                     orderItem.setOrder(order);
                     return orderItem;
                 }

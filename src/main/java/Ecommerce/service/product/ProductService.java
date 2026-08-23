@@ -9,10 +9,12 @@ import Ecommerce.repository.ProductRepository;
 import Ecommerce.utils.dto.ImageDto;
 import Ecommerce.utils.dto.ProductDto;
 import Ecommerce.utils.exceptions.ResourceNotFoundException;
-import Ecommerce.utils.request.AddProductRequest;
-import Ecommerce.utils.request.UpdateProductRequest;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,7 +29,9 @@ public class ProductService implements IProductService{
     private final ModelMapper modelMapper;
     private final ImageRepository imageRepository;
 
-
+    // NEW: hard cap so a client can't request an absurd page size and force
+    // the DB to materialize the entire catalog in one query anyway.
+    private static final int MAX_PAGE_SIZE = 60;
 
     @Override
     public Product getProductById(Long id) {
@@ -39,6 +43,15 @@ public class ProductService implements IProductService{
     @Override
     public List<Product> getAllProducts() {
         return productRepository.findAll();
+    }
+
+    @Override
+    public Page<ProductDto> getAllProductsPaged(int page, int size) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
+
+        Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "id"));
+        return productRepository.findAll(pageable).map(this::convertToDto);
     }
 
 

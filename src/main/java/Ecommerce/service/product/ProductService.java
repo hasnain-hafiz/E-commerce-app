@@ -1,11 +1,11 @@
 package Ecommerce.service.product;
 
-import Ecommerce.model.Category;
 import Ecommerce.model.Image;
 import Ecommerce.model.Product;
 import Ecommerce.repository.CategoryRepository;
 import Ecommerce.repository.ImageRepository;
 import Ecommerce.repository.ProductRepository;
+import Ecommerce.repository.ReviewRepository;
 import Ecommerce.utils.dto.ImageDto;
 import Ecommerce.utils.dto.ProductDto;
 import Ecommerce.utils.exceptions.ResourceNotFoundException;
@@ -16,7 +16,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -28,9 +27,9 @@ public class ProductService implements IProductService{
     private final ProductRepository productRepository;
     private final ModelMapper modelMapper;
     private final ImageRepository imageRepository;
+    // NEW (Phase 2b): needed to populate averageRating/reviewCount below.
+    private final ReviewRepository reviewRepository;
 
-    // NEW: hard cap so a client can't request an absurd page size and force
-    // the DB to materialize the entire catalog in one query anyway.
     private static final int MAX_PAGE_SIZE = 60;
 
     @Override
@@ -66,6 +65,18 @@ public class ProductService implements IProductService{
         List< Image> images = imageRepository.findByProductId(product.getId());
         List<ImageDto> imageDtos = images.stream().map(image -> modelMapper.map(image, ImageDto.class)).toList();
         productDto.setImageList(imageDtos);
+
+        // NEW (Phase 2b): rating summary. Known limitation: this is one
+        // extra query per product (matching the existing per-product image
+        // query above), so a page of N products issues 2N+1 queries. Fine
+        // at this app's scale; flagged for batch-loading in the
+        // Performance phase if the catalog grows significantly.
+        long reviewCount = reviewRepository.countByProductId(product.getId());
+        productDto.setReviewCount(reviewCount);
+        productDto.setAverageRating(reviewCount > 0
+                ? reviewRepository.findAverageRatingByProductId(product.getId())
+                : null);
+
         return productDto;
     }
 

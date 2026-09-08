@@ -71,6 +71,15 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/cart/**").authenticated()
                         .requestMatchers("/api/v1/order/**").authenticated()
 
+                        // NEW (Phase 2b): wishlist is always private to the
+                        // owning customer. Reviews are readable publicly
+                        // (product pages show reviews to guests) but
+                        // writable only by authenticated customers —
+                        // mirrors the /image download-vs-upload split above.
+                        .requestMatchers("/api/v1/wishlist/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/review/**").permitAll()
+                        .requestMatchers("/api/v1/review/**").authenticated()
+
                         // CHANGED: actuator was previously fully open via the
                         // anyRequest().permitAll() fallback combined with
                         // management.endpoints.web.exposure.include=*.

@@ -28,4 +28,10 @@ public class ProductDto {
     @Valid
     private Category category;
     private List<ImageDto> imageList;
+
+    // NEW (Phase 2b): populated by ProductService/SellerService.convertToDto
+    // via ReviewRepository. averageRating is null (not 0) when there are no
+    // reviews yet, so the frontend can distinguish "unrated" from "rated 0".
+    private Double averageRating;
+    private long reviewCount;
 }

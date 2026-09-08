@@ -2,11 +2,15 @@ package Ecommerce.controller;
 
 import Ecommerce.model.user.User;
 import Ecommerce.service.Authentication.AuthenticationService;
+import Ecommerce.service.Authentication.PasswordResetService;
 import Ecommerce.utils.dto.UserDto;
 import Ecommerce.utils.exceptions.AlreadyExistsException;
 import Ecommerce.utils.exceptions.UserNotFoundException;
 import Ecommerce.utils.request.AuthRequest;
+import Ecommerce.utils.request.ForgotPasswordRequest;
+import Ecommerce.utils.request.RefreshTokenRequest;
 import Ecommerce.utils.request.RegisterRequest;
+import Ecommerce.utils.request.ResetPasswordRequest;
 import Ecommerce.utils.response.ApiResponse;
 import Ecommerce.utils.response.AuthResponse;
 import jakarta.annotation.security.PermitAll;
@@ -20,13 +24,18 @@ import java.util.List;
 
 import static org.springframework.http.HttpStatus.*;
 
+// CHANGED (Phase 3): removed @CrossOrigin(origins = "...") — CORS is
+// handled once, globally, by SecurityConfig.corsConfigurationSource().
+// This per-controller annotation was redundant with that bean (same
+// origin list, defined twice) on every controller in the app.
 @RestController
 @RequestMapping("${api.prefix}/auth")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "https://ecommerce-frontend-sigma-lilac.vercel.app")
 public class AuthController {
 
     private final AuthenticationService authService;
+    // NEW (Phase 3)
+    private final PasswordResetService passwordResetService;
 
     @GetMapping("/warmup")
     public String warmup(){
@@ -53,8 +62,38 @@ public class AuthController {
            return ResponseEntity.ok(new ApiResponse("Login successful!", authResponse));
        }
        catch (Exception e){
-           return ResponseEntity.status(UNAUTHORIZED).body(new ApiResponse("Invalid Email or Password", e.getMessage()));
+           // CHANGED: previously returned e.getMessage() in the "data"
+           // field, which could leak internal auth-provider exception text.
+           // Always a generic message now, regardless of the underlying cause.
+           return ResponseEntity.status(UNAUTHORIZED).body(new ApiResponse("Invalid Email or Password", null));
        }
+    }
+
+    // NEW (Phase 3): exchanges a refresh token for a new access token.
+    @PostMapping("/refresh")
+    @PermitAll
+    public ResponseEntity<ApiResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        AuthResponse authResponse = authService.refreshAccessToken(request.getRefreshToken());
+        return ResponseEntity.ok(new ApiResponse("Token refreshed successfully!", authResponse));
+    }
+
+    // NEW (Phase 3): always returns the same generic message regardless of
+    // whether the email exists, to avoid using this endpoint to enumerate
+    // registered accounts.
+    @PostMapping("/forgot-password")
+    @PermitAll
+    public ResponseEntity<ApiResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        passwordResetService.requestReset(request.getEmail());
+        return ResponseEntity.ok(new ApiResponse(
+                "If an account with that email exists, a password reset link has been sent.", null));
+    }
+
+    // NEW (Phase 3)
+    @PostMapping("/reset-password")
+    @PermitAll
+    public ResponseEntity<ApiResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
+        return ResponseEntity.ok(new ApiResponse("Password reset successfully! You can now log in.", null));
     }
 
     @GetMapping("/all")

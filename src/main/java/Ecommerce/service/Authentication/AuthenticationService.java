@@ -1,13 +1,13 @@
 package Ecommerce.service.Authentication;
 
 import Ecommerce.jwt.JwtService;
+import Ecommerce.model.RefreshToken;
 import Ecommerce.model.Token;
 import Ecommerce.model.user.CustomUserDetails;
 import Ecommerce.model.user.User;
 import Ecommerce.repository.TokenRepository;
 import Ecommerce.repository.UserRepository;
 import Ecommerce.utils.dto.UserDto;
-import Ecommerce.utils.enums.UserRole;
 import Ecommerce.utils.exceptions.AlreadyExistsException;
 import Ecommerce.utils.exceptions.UserNotFoundException;
 import Ecommerce.utils.request.AuthRequest;
@@ -38,13 +38,14 @@ public class AuthenticationService implements IAuthenticationService{
     private final AuthenticationManager authenticationManager;
     private final TokenRepository tokenRepo;
     private final ModelMapper modelMapper;
+    // NEW (Phase 3)
+    private final RefreshTokenService refreshTokenService;
 
     @Override
     @Transactional
     public AuthResponse register(RegisterRequest registerRequest) {
         var e_user= userRepository.findByEmail(registerRequest.getEmail());
         if(e_user.isPresent()) { throw new AlreadyExistsException("Email already exists!");}
-        System.out.println("role-seller=" +registerRequest.isSeller());
 
        var user = User.builder()
                .firstName(registerRequest.getFirstName())
@@ -53,24 +54,15 @@ public class AuthenticationService implements IAuthenticationService{
                .password(passwordEncoder.encode(registerRequest.getPassword()))
                .roles(!registerRequest.isSeller() ? Set.of(ROLE_CUSTOMER) : Set.of(ROLE_SELLER))
                .build();
-        System.out.println("user-role=" +user.getEmail() + user.getRoles());
         var savedUser = userRepository.save(user);
         var token = jwtService.generateToken(new CustomUserDetails(savedUser));
 
         revokeAllUserToken(savedUser);
         saveUserToken(savedUser, token);
 
-        AuthResponse authResponse = new AuthResponse();
-        authResponse.setToken(token);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(savedUser);
 
-        if(savedUser.getRoles().contains(ROLE_CUSTOMER)){
-             authResponse.setSeller(false);
-        }
-        else{
-            authResponse.setSeller(true);
-        }
-
-        return authResponse;
+        return buildAuthResponse(savedUser, token, refreshToken.getToken());
     }
 
     @Override
@@ -90,15 +82,31 @@ public class AuthenticationService implements IAuthenticationService{
         revokeAllUserToken(user);
         saveUserToken(user, token);
 
-        AuthResponse authResponse = new AuthResponse();
-        authResponse.setToken(token);
-        if(user.getRoles().contains(ROLE_CUSTOMER)){
-            authResponse.setSeller(false);
-        }
-        else{
-            authResponse.setSeller(true);
-        }
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
+        return buildAuthResponse(user, token, refreshToken.getToken());
+    }
+
+    // NEW (Phase 3): exchanges a valid, unexpired, unrevoked refresh token
+    // for a new short-lived access token, rotating the refresh token in
+    // the same operation.
+    @Override
+    @Transactional
+    public AuthResponse refreshAccessToken(String refreshTokenValue) {
+        RefreshToken rotated = refreshTokenService.verifyAndRotate(refreshTokenValue);
+        User user = rotated.getUser();
+
+        var token = jwtService.generateToken(new CustomUserDetails(user));
+        saveUserToken(user, token);
+
+        return buildAuthResponse(user, token, rotated.getToken());
+    }
+
+    private AuthResponse buildAuthResponse(User user, String accessToken, String refreshToken) {
+        AuthResponse authResponse = new AuthResponse();
+        authResponse.setToken(accessToken);
+        authResponse.setRefreshToken(refreshToken);
+        authResponse.setSeller(!user.getRoles().contains(ROLE_CUSTOMER));
         return authResponse;
     }
 

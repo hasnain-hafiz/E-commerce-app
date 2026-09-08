@@ -16,10 +16,17 @@ import java.util.List;
 
 import static org.springframework.http.HttpStatus.*;
 
+// CHANGED (Phase 3): removed @CrossOrigin(origins = "...") — CORS is
+// handled once, globally, by SecurityConfig.corsConfigurationSource().
+// NOTE: Category is still accepted/returned as the raw JPA entity here
+// (no DTO) — flagged in the Phase 0 audit as a smaller architectural
+// smell (mass-assignment risk, no validation constraints on the entity
+// itself). Deferred again this phase: it's lower severity than everything
+// else in this batch and touches the admin-only category endpoints, not
+// anything customer-facing. Tracked for a future cleanup pass.
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("${api.prefix}/category")
-@CrossOrigin(origins = "https://ecommerce-frontend-sigma-lilac.vercel.app")
 public class CategoryController {
 
     private final CategoryService categoryService;

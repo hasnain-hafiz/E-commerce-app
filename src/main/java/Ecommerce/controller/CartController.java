@@ -1,33 +1,23 @@
 package Ecommerce.controller;
 
 import Ecommerce.model.Cart;
-import Ecommerce.model.user.User;
-import Ecommerce.repository.UserRepository;
 import Ecommerce.service.cart.CartService;
 import Ecommerce.utils.dto.CartDto;
-import Ecommerce.utils.exceptions.ResourceNotFoundException;
 import Ecommerce.utils.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
-import static org.springframework.http.HttpStatus.CREATED;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
-
+// CHANGED (Phase 3): removed @CrossOrigin(origins = "...") — CORS is
+// handled once, globally, by SecurityConfig.corsConfigurationSource().
 @RestController
 @RequestMapping("${api.prefix}/cart")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "https://ecommerce-frontend-sigma-lilac.vercel.app")
 public class CartController {
 
     private final CartService cartService;
 
-    // =========================
-    // 📦 GET CART
-    // =========================
     @GetMapping("/my")
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ApiResponse> getCart() {
@@ -39,9 +29,6 @@ public class CartController {
         );
     }
 
-    // =========================
-    // ➕ ADD ITEM
-    // =========================
     @PostMapping("/items/{productId}")
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ApiResponse> addItem(
@@ -56,9 +43,6 @@ public class CartController {
         );
     }
 
-    // =========================
-    // 🔄 UPDATE QUANTITY
-    // =========================
     @PutMapping("/items/{productId}")
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ApiResponse> updateItemQuantity(
@@ -73,9 +57,6 @@ public class CartController {
         );
     }
 
-    // =========================
-    // ❌ REMOVE ITEM
-    // =========================
     @DeleteMapping("/items/{productId}")
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ApiResponse> removeItem(
@@ -89,9 +70,6 @@ public class CartController {
         );
     }
 
-    // =========================
-    // 🧹 CLEAR CART
-    // =========================
     @DeleteMapping("/clear")
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ApiResponse> clearCart() {

@@ -13,5 +13,10 @@ import lombok.NoArgsConstructor;
 public class AuthResponse {
     @NotBlank
     private String token;
+
+    // NEW (Phase 3): opaque refresh token, exchanged via POST /auth/refresh
+    // for a new short-lived access token without re-entering credentials.
+    private String refreshToken;
+
     private boolean seller;
 }

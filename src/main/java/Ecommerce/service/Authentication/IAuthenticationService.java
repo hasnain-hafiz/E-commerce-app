@@ -13,6 +13,9 @@ public interface IAuthenticationService {
     AuthResponse register(RegisterRequest registerRequest);
     AuthResponse authenticate(AuthRequest authRequest);
 
+    // NEW (Phase 3)
+    AuthResponse refreshAccessToken(String refreshTokenValue);
+
     List<User> getAllUsers();
 
     User getUserById(Long id);

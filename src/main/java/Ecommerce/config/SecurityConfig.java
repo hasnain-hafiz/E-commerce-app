@@ -21,12 +21,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
 import java.util.List;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
@@ -37,10 +39,9 @@ public class SecurityConfig {
     private final UserDetailsService userDetailsService;
     private final JwtFilter jwtFilter;
     private final LogoutService logoutService;
+    private final RateLimitingFilter rateLimitingFilter;
 
-    // CHANGED: origins now come from an env var instead of being hardcoded,
-    // so local/staging/prod frontends can differ without a code change.
-    // Defaults preserve the previous hardcoded values for backward compatibility.
+
     @Value("#{'${cors.allowed-origins:http://localhost:5173,http://localhost:5174,https://ecommerce-frontend-sigma-lilac.vercel.app}'.split(',')}")
     private List<String> allowedOrigins;
 
@@ -49,40 +50,38 @@ public class SecurityConfig {
 
         httpSecurity.csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // NEW (Phase 3): explicit security headers. Spring Security
+                // already applies sensible defaults (X-Content-Type-Options,
+                // X-Frame-Options DENY) even without this block, but HSTS's
+                // effect depends on being served over HTTPS (true in
+                // production behind Render) and the referrer policy isn't
+                // part of the defaults — both made explicit here rather
+                // than relying on implicit behavior.
+                .headers(headers -> headers
+                        .contentTypeOptions(withDefaults())
+                        .frameOptions(frame -> frame.deny())
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .maxAgeInSeconds(31536000))
+                        .referrerPolicy(referrer -> referrer
+                                .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                )
                 .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
                         .requestMatchers("/api/v1/auth/**").permitAll()
 
-                        // Public product/category browsing stays open.
                         .requestMatchers(HttpMethod.GET, "/api/v1/product/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/category/**").permitAll()
 
-                        // CHANGED: only the actual public image download is open;
-                        // upload/update/delete now require authentication at the URL
-                        // level too (previously "/api/v1/image/**" was permitAll and
-                        // only @PreAuthorize on the methods enforced anything).
                         .requestMatchers(HttpMethod.GET, "/api/v1/image/download/**").permitAll()
                         .requestMatchers("/api/v1/image/**").authenticated()
 
-                        // CHANGED: added "/**" — these previously only matched the
-                        // literal paths "/api/v1/cart" and "/api/v1/order" and were
-                        // NOT protecting "/cart/my", "/order/all", etc. at the URL
-                        // layer. Method security (@PreAuthorize) was the only thing
-                        // actually enforcing auth on those before.
                         .requestMatchers("/api/v1/cart/**").authenticated()
                         .requestMatchers("/api/v1/order/**").authenticated()
 
-                        // NEW (Phase 2b): wishlist is always private to the
-                        // owning customer. Reviews are readable publicly
-                        // (product pages show reviews to guests) but
-                        // writable only by authenticated customers —
-                        // mirrors the /image download-vs-upload split above.
                         .requestMatchers("/api/v1/wishlist/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/review/**").permitAll()
                         .requestMatchers("/api/v1/review/**").authenticated()
 
-                        // CHANGED: actuator was previously fully open via the
-                        // anyRequest().permitAll() fallback combined with
-                        // management.endpoints.web.exposure.include=*.
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/actuator/**").hasRole("ADMIN")
 
@@ -90,12 +89,16 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
+                // NEW (Phase 3): rejects excessive login/register/forgot-password
+                // attempts before they reach JwtFilter or the controller.
+                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .logout(logout -> logout
-                .logoutUrl("/api/auth/logout")
-                .addLogoutHandler(logoutService)
-                .logoutSuccessHandler(((request, response, authentication) ->
-                        SecurityContextHolder.clearContext())));
+                    .logoutUrl("/api/v1/auth/logout")
+                    .addLogoutHandler(logoutService)
+                    .logoutSuccessHandler((request, response, authentication) ->
+                            SecurityContextHolder.clearContext()));
+
 
         return httpSecurity.build();
     }

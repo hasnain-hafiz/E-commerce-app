@@ -66,33 +66,56 @@ class SellerServiceTest {
     }
 
     private void loginAs(User user) {
-        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(user.getEmail(), null));
+                new UsernamePasswordAuthenticationToken(user.getEmail(), null)
+        );
     }
+
 
     @Test
     void deleteProductById_throwsForbidden_whenCallerIsNotTheOwner() {
         loginAs(otherSeller);
-        when(productRepository.findById(100L)).thenReturn(Optional.of(product));
 
-        assertThrows(ForbiddenException.class, () -> sellerService.deleteProductById(100L));
+        when(userRepository.findByEmail(otherSeller.getEmail()))
+                .thenReturn(Optional.of(otherSeller));
+
+        when(productRepository.findById(100L))
+                .thenReturn(Optional.of(product));
+
+        assertThrows(
+                ForbiddenException.class,
+                () -> sellerService.deleteProductById(100L)
+        );
+
         verify(productRepository, never()).delete(any());
     }
+
 
     @Test
     void deleteProductById_succeeds_whenCallerIsTheOwner() {
         loginAs(owner);
-        when(productRepository.findById(100L)).thenReturn(Optional.of(product));
+
+        when(userRepository.findByEmail(owner.getEmail()))
+                .thenReturn(Optional.of(owner));
+
+        when(productRepository.findById(100L))
+                .thenReturn(Optional.of(product));
 
         assertDoesNotThrow(() -> sellerService.deleteProductById(100L));
+
         verify(productRepository).delete(product);
     }
+
 
     @Test
     void updateProduct_throwsForbidden_whenCallerIsNotTheOwner() {
         loginAs(otherSeller);
-        when(productRepository.findById(100L)).thenReturn(Optional.of(product));
+
+        when(userRepository.findByEmail(otherSeller.getEmail()))
+                .thenReturn(Optional.of(otherSeller));
+
+        when(productRepository.findById(100L))
+                .thenReturn(Optional.of(product));
 
         UpdateProductRequest request = new UpdateProductRequest();
         request.setName("Hijacked Name");
@@ -102,17 +125,30 @@ class SellerServiceTest {
         request.setInventory(5);
         request.setCategory("Electronics");
 
-        assertThrows(ForbiddenException.class, () -> sellerService.updateProduct(request, 100L));
+        assertThrows(
+                ForbiddenException.class,
+                () -> sellerService.updateProduct(request, 100L)
+        );
+
         verify(productRepository, never()).save(any());
     }
+
 
     @Test
     void updateProduct_succeeds_whenCallerIsTheOwner() {
         loginAs(owner);
-        when(productRepository.findById(100L)).thenReturn(Optional.of(product));
+
+        when(userRepository.findByEmail(owner.getEmail()))
+                .thenReturn(Optional.of(owner));
+
+        when(productRepository.findById(100L))
+                .thenReturn(Optional.of(product));
+
         when(categoryRepository.findByName("Electronics"))
                 .thenReturn(Optional.of(new Category("Electronics")));
-        when(productRepository.save(any(Product.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        when(productRepository.save(any(Product.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
 
         UpdateProductRequest request = new UpdateProductRequest();
         request.setName("Updated Name");
@@ -128,8 +164,10 @@ class SellerServiceTest {
         verify(productRepository).save(product);
     }
 
+
     @Test
     void deleteProductById_throwsNotFound_whenProductDoesNotExist() {
+        loginAs(owner);
         when(productRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> sellerService.deleteProductById(999L));

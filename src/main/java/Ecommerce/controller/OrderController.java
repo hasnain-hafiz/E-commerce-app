@@ -17,10 +17,11 @@ import java.util.List;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
+// CHANGED (Phase 3): removed @CrossOrigin(origins = "...") — CORS is
+// handled once, globally, by SecurityConfig.corsConfigurationSource().
 @RestController
 @RequestMapping("${api.prefix}/order")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "https://ecommerce-frontend-sigma-lilac.vercel.app")
 public class OrderController {
 
     private final OrderService orderService;

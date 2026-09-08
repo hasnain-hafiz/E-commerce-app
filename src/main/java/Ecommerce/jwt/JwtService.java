@@ -20,8 +20,18 @@ public class JwtService {
 
     private final String secretKey;
 
-    public JwtService(@Value("${jwt.secret}") String secretKey) {
+    // CHANGED (Phase 3): was hardcoded to 100*60*60*10 ms (~41 days) — an
+    // effectively long-lived bearer token with no way to shorten its
+    // lifetime short of revoking it outright. Now short-lived (default 15
+    // minutes) and configurable; long-lived sessions are handled by the
+    // new server-side-revocable refresh token instead of a long-lived,
+    // stateless access token.
+    private final long accessTokenExpirationMs;
+
+    public JwtService(@Value("${jwt.secret}") String secretKey,
+                       @Value("${jwt.access-token-expiration-ms:900000}") long accessTokenExpirationMs) {
         this.secretKey = secretKey;
+        this.accessTokenExpirationMs = accessTokenExpirationMs;
     }
 
     public String generateToken(Map<String, Object> claims, UserDetails userDetails) {
@@ -29,7 +39,7 @@ public class JwtService {
                 .setClaims(claims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 100 * 60 * 60 * 10))
+                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpirationMs))
                 .signWith(getKey(), SignatureAlgorithm.HS256)
                 .compact();
     }

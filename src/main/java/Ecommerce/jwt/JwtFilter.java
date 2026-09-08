@@ -42,7 +42,7 @@ public class JwtFilter extends OncePerRequestFilter {
                     .map(t -> !t.isExpired() && !t.isRevoked())
                     .orElse(false);
 
-            if(jwtService.validateToken(token, userDetails)){
+            if(isTokenValid && jwtService.validateToken(token, userDetails)){
 
                 UsernamePasswordAuthenticationToken authenticationToken = new
                         UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());

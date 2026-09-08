@@ -13,7 +13,6 @@ import java.util.List;
 @RestController
 @RequestMapping("${api.prefix}/wishlist")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "https://ecommerce-frontend-sigma-lilac.vercel.app")
 public class WishlistController {
 
     private final IWishlistService wishlistService;

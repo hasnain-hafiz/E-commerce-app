@@ -16,16 +16,16 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.sql.SQLException;
 import java.util.List;
 
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
+// CHANGED (Phase 3): removed @CrossOrigin(origins = "...") — CORS is
+// handled once, globally, by SecurityConfig.corsConfigurationSource().
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("${api.prefix}/image")
-@CrossOrigin(origins = "https://ecommerce-frontend-sigma-lilac.vercel.app")
 public class ImageController {
 
     private final IImageService imageService;
@@ -42,9 +42,7 @@ public class ImageController {
                         .body(new ApiResponse("No files provided", null));
             }
 
-            System.out.println("Product ID: " + productId);
             List<ImageDto> imageDtos = imageService.saveImages(files, productId);
-            System.out.println("Image Dtos: " + imageDtos);
             return ResponseEntity.ok(new ApiResponse("Upload success!", imageDtos));
         } catch (Exception e) {
             return ResponseEntity.status(INTERNAL_SERVER_ERROR)
@@ -64,7 +62,7 @@ public class ImageController {
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(image.getFileType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "inline; filename=\"" + image.getFileName() + "\"") // ✅ FIXED
+                        "inline; filename=\"" + image.getFileName() + "\"")
                 .body(resource);
     }
 

@@ -16,7 +16,6 @@ import java.util.List;
 @RestController
 @RequestMapping("${api.prefix}/review")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "https://ecommerce-frontend-sigma-lilac.vercel.app")
 public class ReviewController {
 
     private final IReviewService reviewService;

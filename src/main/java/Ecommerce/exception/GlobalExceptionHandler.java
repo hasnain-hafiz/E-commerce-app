@@ -2,6 +2,7 @@ package Ecommerce.exception;
 
 import Ecommerce.utils.exceptions.AlreadyExistsException;
 import Ecommerce.utils.exceptions.ForbiddenException;
+import Ecommerce.utils.exceptions.InvalidTokenException;
 import Ecommerce.utils.exceptions.ProductNotFoundException;
 import Ecommerce.utils.exceptions.ResourceNotFoundException;
 import Ecommerce.utils.exceptions.ReviewNotAllowedException;
@@ -56,6 +57,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<ApiError> handleForbidden(ForbiddenException ex, HttpServletRequest req) {
         return build(HttpStatus.FORBIDDEN, "FORBIDDEN", ex.getMessage(), req, null);
+    }
+
+    // NEW (Phase 3): invalid/expired/revoked/already-used refresh or
+    // password-reset tokens — 401, since the caller needs to re-authenticate
+    // or request a fresh reset link, not retry the same request.
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<ApiError> handleInvalidToken(InvalidTokenException ex, HttpServletRequest req) {
+        return build(HttpStatus.UNAUTHORIZED, "INVALID_TOKEN", ex.getMessage(), req, null);
     }
 
     // NEW (Phase 2b): "you haven't purchased this" / "you already reviewed

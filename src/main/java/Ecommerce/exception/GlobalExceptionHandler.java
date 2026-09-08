@@ -4,6 +4,7 @@ import Ecommerce.utils.exceptions.AlreadyExistsException;
 import Ecommerce.utils.exceptions.ForbiddenException;
 import Ecommerce.utils.exceptions.ProductNotFoundException;
 import Ecommerce.utils.exceptions.ResourceNotFoundException;
+import Ecommerce.utils.exceptions.ReviewNotAllowedException;
 import Ecommerce.utils.exceptions.UserNotFoundException;
 import Ecommerce.utils.response.ApiError;
 import jakarta.servlet.http.HttpServletRequest;
@@ -55,6 +56,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<ApiError> handleForbidden(ForbiddenException ex, HttpServletRequest req) {
         return build(HttpStatus.FORBIDDEN, "FORBIDDEN", ex.getMessage(), req, null);
+    }
+
+    // NEW (Phase 2b): "you haven't purchased this" / "you already reviewed
+    // this" — a permission-shaped failure, so 403 rather than 400/409.
+    @ExceptionHandler(ReviewNotAllowedException.class)
+    public ResponseEntity<ApiError> handleReviewNotAllowed(ReviewNotAllowedException ex, HttpServletRequest req) {
+        return build(HttpStatus.FORBIDDEN, "REVIEW_NOT_ALLOWED", ex.getMessage(), req, null);
     }
 
     @ExceptionHandler(AccessDeniedException.class)

@@ -7,6 +7,7 @@ import Ecommerce.model.user.User;
 import Ecommerce.repository.CategoryRepository;
 import Ecommerce.repository.ImageRepository;
 import Ecommerce.repository.ProductRepository;
+import Ecommerce.repository.ReviewRepository;
 import Ecommerce.repository.UserRepository;
 import Ecommerce.utils.dto.ImageDto;
 import Ecommerce.utils.dto.ProductDto;
@@ -33,6 +34,9 @@ public class SellerService implements ISellerService {
     private final CategoryRepository categoryRepository;
     private final ModelMapper modelMapper;
     private final ImageRepository imageRepository;
+    // NEW (Phase 2b): kept consistent with ProductService.convertToDto so
+    // a seller sees the same rating summary on their own product list.
+    private final ReviewRepository reviewRepository;
 
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext()
@@ -132,6 +136,13 @@ public class SellerService implements ISellerService {
         List<Image> images = imageRepository.findByProductId(product.getId());
         List<ImageDto> imageDtos = images.stream().map(image -> modelMapper.map(image, ImageDto.class)).toList();
         productDto.setImageList(imageDtos);
+
+        long reviewCount = reviewRepository.countByProductId(product.getId());
+        productDto.setReviewCount(reviewCount);
+        productDto.setAverageRating(reviewCount > 0
+                ? reviewRepository.findAverageRatingByProductId(product.getId())
+                : null);
+
         return productDto;
     }
 
